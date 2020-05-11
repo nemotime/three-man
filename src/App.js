@@ -46,7 +46,8 @@ class App extends Component {
           {this.state.threeMan !== null
             ? this.state.players[this.state.threeMan].name + ' is '
             : ''}
-          Three Man
+          <span className="three">Three</span>
+          <span className="man">man</span>
         </h1>
         <h2>
           Player order:{' '}
@@ -58,7 +59,7 @@ class App extends Component {
           ))}
         </h2>
         {this.state.playersSet ? (
-          <h1>
+          <h1 className="turnPlaceholder">
             {this.state.players[this.state.currentPlayer].name}
             's turn
           </h1>
@@ -67,7 +68,7 @@ class App extends Component {
         )}
         <div className="buttons">
           {this.state.playersSet ? (
-            [1, 2, 3, 4, 5].map((number) => {
+            [1, 2].map((number) => {
               let text = number === 1 ? 'die' : 'dice';
               return (
                 <button
