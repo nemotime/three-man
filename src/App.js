@@ -15,7 +15,7 @@ ORDER OF PRIORITY
 
 2. Simulate dice rolling
 
-3. Dimuneur for placing mines to cancel a roll, count how many sips people have drank and grant them a "CAN" to mine people's rolls
+3. Demineur for placing mines to cancel a roll, count how many sips people have drank and grant them a "CAN" to mine people's rolls
 People who are mined have a % chance to hit the mine
 
 4. Allow input for rules, states for it
