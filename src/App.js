@@ -371,9 +371,11 @@ class App extends Component {
       players[playerNum].name +
       '.';
     const givingSips = false;
+    const promptTextSum = '';
     this.setState({
       givenSips,
       givingSips,
+      promptTextSum,
     });
   }
   makeRule() {}
