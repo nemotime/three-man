@@ -8,10 +8,17 @@ import five from './assets/five.png';
 import six from './assets/six.png';
 
 /*
-State for players, state for 3-man, state for rules
-Simulate dice rolling
+#######################
+ORDER OF PRIORITY
+#######################
+1. Program for giving sips to desired player, update player sips using prevState
 
-Allow input for rules
+2. Simulate dice rolling
+
+3. Dimuneur for placing mines to cancel a roll, count how many sips people have drank and grant them a "CAN" to mine people's rolls
+People who are mined have a % chance to hit the mine
+
+4. Allow input for rules, states for it
 Parse for "next player" and "previous player" maybe RANDOM PLAYER?
 
 FORMAT:
@@ -23,15 +30,12 @@ Value: ______ Consequence:___________ Amount of Sips: ______________
 e.g. When 4 total is rolled, give sips (4 sips)
 ###########################################################################
 
-Dimuneur for placing mines to cancel a roll, count how many sips people have drank and grant them a "CAN" to mine people's rolls
-People who are mined have a % chance to hit the mine
-Program for giving sips to desired player, update player sips using prevState
-
 
 ###############################
               DONE
 ###############################
 Player order: Have player order for 7's 11's etc
+State for players, state for 3-man
 
 */
 
