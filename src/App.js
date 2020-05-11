@@ -9,8 +9,10 @@ import six from './assets/six.png';
 
 /*
 State for players, state for 3-man, state for rules
-Player order: Have player order for 7's 11's etc
+Simulate dice rolling
+
 Allow input for rules
+Parse for "next player" and "previous player" maybe RANDOM PLAYER?
 
 FORMAT:
 ###########################################################################
@@ -23,8 +25,14 @@ e.g. When 4 total is rolled, give sips (4 sips)
 
 Dimuneur for placing mines to cancel a roll, count how many sips people have drank and grant them a "CAN" to mine people's rolls
 People who are mined have a % chance to hit the mine
-Parse for "next player" and "previous player" maybe RANDOM PLAYER?
 Program for giving sips to desired player, update player sips using prevState
+
+
+###############################
+              DONE
+###############################
+Player order: Have player order for 7's 11's etc
+
 */
 
 class App extends Component {
@@ -34,7 +42,7 @@ class App extends Component {
     const { players, currentPlayer, givingSips, givenSips } = this.state;
     return (
       <div className="App">
-        <h1>
+        <h1 className="titleTop">
           {this.state.threeMan !== null
             ? this.state.players[this.state.threeMan].name + ' is '
             : ''}
@@ -99,7 +107,7 @@ class App extends Component {
                 >
                   Add Player
                 </button>
-                <button>Vamanos</button>
+                <button>Vamonos</button>
               </form>
             </div>
           )}
@@ -129,11 +137,14 @@ class App extends Component {
                 <button
                   key={index}
                   onClick={() => this.displayGivenSips(index)}
-                ></button>
+                  className="sipGiver"
+                >
+                  {players[index].name}
+                </button>
               );
             })
           : ''}
-        {givenSips}
+        <h2>{givenSips}</h2>
         {this.state.rolls.map((roll, index) => (
           <DiceImage roll={roll} key={index} />
         ))}
@@ -196,12 +207,14 @@ class App extends Component {
       rollSum += rolls[i];
     }
     let givenSips = '';
+    let givingSips = false;
     this.setState(
       {
         numberOfDice,
         rolls,
         rollSum,
         givenSips,
+        givingSips,
       },
       () => {
         this.getResult();
@@ -216,23 +229,37 @@ class App extends Component {
   }
   getResult() {
     var text;
-
-    switch (this.state.rollSum) {
+    let { rollSum, rolls, currentPlayer, players } = this.state;
+    switch (rollSum) {
       case 2:
-        text = 'You drink.';
+        if (rolls[0] === 1) {
+          text = 'You drink.\n';
+        } else {
+          text = '';
+        }
         break;
       case 3:
-        text = 'You are Three Man';
-        this.setThreeMan(this.state.currentPlayer);
+        if (rolls[0] === 1 || rolls[0] === 2) {
+          text = players[currentPlayer].name + ', you are Three Man.\n';
+          this.setThreeMan(this.state.currentPlayer);
+        } else {
+          text = '';
+        }
         break;
       case 7:
-        text = 'Person before you drinks';
+        text =
+          'Person before you, ' +
+          this.getPlayerBeforeName(players, currentPlayer) +
+          ', drinks.\n\n';
         break;
       case 11:
-        text = 'Person after you drinks';
+        text =
+          'Person after you, ' +
+          this.getPlayerAfterName(players, currentPlayer) +
+          ', drinks.\n\n';
         break;
       case 12:
-        text = 'Make a new rule';
+        text = 'Make a new rule or';
         this.makeRule();
         break;
       default:
@@ -241,9 +268,10 @@ class App extends Component {
     }
     text = this.checkEachDice(text);
     if (text.length === 0) {
-      text = 'Nothing happens';
+      text = 'Nothing happens.\n';
+    } else if (text === '-1') {
+      text = '';
     }
-    console.log(text);
     return this.setState({
       promptTextSum: text,
     });
@@ -252,32 +280,60 @@ class App extends Component {
   checkEachDice(text) {
     const { threeMan, players, rolls } = this.state;
     let addedText = text;
-
-    addedText += rolls.map((roll, index) => {
-      switch (roll) {
-        case 3:
-          if (!threeMan) return '';
-          return '\nThree man ' + players[threeMan].name + ' drinks';
-        default:
-          return '';
-      }
-    });
-    return this.checkPair(addedText, rolls);
+    addedText += rolls
+      .map((roll, index) => {
+        console.log(roll);
+        switch (roll) {
+          case 3:
+            if (threeMan === null) return '';
+            return (
+              '\nThree man, ' + players[threeMan].name + ', you drink.\n\n'
+            );
+          default:
+            return '';
+        }
+      })
+      .join('');
+    if (this.checkPair(rolls) && addedText === '') {
+      addedText = '-1';
+    }
+    return addedText;
   }
-  checkPair(text, rolls) {
+  checkPair(rolls) {
     if (rolls.length > 1) {
       if (rolls[0] === rolls[1] && rolls[0] !== 1) {
-        this.giveSomeoneSips(rolls[0] * 2);
+        if (rolls[0] === 3) {
+          const givenSips = 'Three man take 6 more sips\n';
+          this.setState({
+            givenSips,
+          });
+        } else {
+          this.giveSomeoneSips(rolls[0] * 2);
+          return true;
+        }
       }
     }
-    return text;
   }
   setThreeMan(player) {
     this.setState({
       threeMan: player,
     });
   }
+  getPlayerAfterName(players, currentPlayer) {
+    let playerAfter = 0;
+    if (currentPlayer !== players.filter((player) => player.name).length - 1) {
+      playerAfter = currentPlayer + 1;
+    }
+    return players[playerAfter].name;
+  }
 
+  getPlayerBeforeName(players, currentPlayer) {
+    let playerBefore = players.length - 1;
+    if (currentPlayer !== 0) {
+      playerBefore = currentPlayer - 1;
+    }
+    return players[playerBefore].name;
+  }
   giveSelfSip(sips) {}
 
   giveSomeoneSips(sips) {

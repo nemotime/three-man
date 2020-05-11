@@ -43,10 +43,15 @@
   background-color: rgb(50, 50, 50);
   margin: auto;
   width: 1000px;
-  height: 450px;
+  height: 800px;
   margin-top: 50px;
   color: white;
 }
+
+.titleTop {
+  font-size: 40px;
+}
+
 .buttons {
   display: flex;
   justify-content: center;
@@ -63,8 +68,22 @@
   margin-right: 10px;
 }
 
+.button:hover {
+  background-color: rgb(17, 87, 17);
+}
 .endButton {
   background-color: rgb(136, 27, 27);
+  border: 2px solid black;
+  border-radius: 5px;
+  color: white;
+  text-decoration: none;
+  font-size: 18px;
+  padding: 10px;
+  margin-right: 10px;
+}
+
+.sipGiver {
+  background-color: #ffa500;
   border: 2px solid black;
   border-radius: 5px;
   color: white;
@@ -112,7 +131,7 @@ form button {
 }
 
 form button:hover {
-  background-color: #669509;
+  background-color: rgb(172, 112, 0);
 }
 
 form button:disabled {
