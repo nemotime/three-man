@@ -14,6 +14,10 @@ import can from './assets/L50.png';
 ORDER OF PRIORITY
 #######################
 
+1. Dice Stats
+Times rolled a # (per person, in the game)
+#3 man sips taken
+
 4. Allow input for rules, states for it
 Parse for "next player" and "previous player" maybe RANDOM PLAYER?
 
@@ -65,6 +69,8 @@ class App extends Component {
       speeding,
       numberOfDice,
       makingRule,
+      rollTotalsWithRules,
+      dieWithRules,
     } = this.state;
     return (
       <div className="App">
@@ -256,27 +262,35 @@ class App extends Component {
                     <span>
                       {makingRule ? (
                         <div className="makeRule">
-                          Make a rule with number showing on a dice
+                          <h3>Make a rule with number showing on a dice</h3>
                           {[1, 2, 3, 4, 5, 6].map((number) => {
+                            let diceClassName = 'diceRule';
+                            if (dieWithRules[number]) {
+                              diceClassName += ' diceHasRule';
+                            }
                             return (
                               <button
                                 key={number}
                                 onClick={() => this.setDieRule(number)}
-                                className="diceRule" //was button
+                                className={diceClassName} //was button
                               >
                                 {number}
                               </button>
                             );
                           })}
                           <br />
-                          Make a rule with the total of the roll
+                          <h3>Make a rule with the total of the roll</h3>
                           {[2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(
                             (number) => {
+                              let diceClassName = 'diceRule';
+                              if (rollTotalsWithRules[number]) {
+                                diceClassName += ' diceHasRule';
+                              }
                               return (
                                 <button
                                   key={number}
                                   onClick={() => this.setDiceTotalRule(number)}
-                                  className="diceRule" //was button
+                                  className={diceClassName} //was button
                                 >
                                   {number}
                                 </button>
@@ -548,9 +562,14 @@ class App extends Component {
   };
 
   handleRemovePlayer = (idx) => () => {
-    const { playersSet, players } = this.state;
+    const { playersSet, players, threeMan } = this.state;
     if (playersSet && players.length === 1) {
       return;
+    }
+    if (idx === threeMan) {
+      this.setState({
+        threeMan: null,
+      });
     }
     this.setState({
       players: this.state.players.filter((s, sidx) => idx !== sidx),
