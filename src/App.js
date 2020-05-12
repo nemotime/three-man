@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component, Dialog } from 'react';
 import './App.css';
 import one from './assets/one.png';
 import two from './assets/two.png';
@@ -13,16 +13,15 @@ import can from './assets/L50.png';
 #######################
 ORDER OF PRIORITY
 #######################
+
 4. Allow input for rules, states for it
 Parse for "next player" and "previous player" maybe RANDOM PLAYER?
-
-4.75 if rule is on it, shouldnt say nothing happens
 
 FORMAT:
 ###########################################################################
 o Dice Total
 o Single Dice Value
-Value: ______ Consequence:___________ Amount of Sips: ______________
+Value: ______ Consequence:___________           //Amount of Sips: ______________
 
 e.g. When 4 total is rolled, give sips (4 sips)
 ###########################################################################
@@ -46,6 +45,8 @@ State for players, state for 3-man
 3. Demineur for placing mines to cancel a roll, count how many sips people have drank and grant them a "CAN" to mine people's rolls
 People who are mined have a % chance to hit the mine
 
+4.75 if rule is on it, shouldnt say nothing happens
+
 */
 
 class App extends Component {
@@ -63,6 +64,7 @@ class App extends Component {
       mined,
       speeding,
       numberOfDice,
+      makingRule,
     } = this.state;
     return (
       <div className="App">
@@ -103,6 +105,27 @@ class App extends Component {
             </td>
             <td className="tableCans">
               <div className="sidebar2">
+                {this.state.playersSet ? (
+                  <div className="addPlayer">
+                    <input
+                      onChange={(value) => this.handlePlayerName(value)}
+                      className="smallInput"
+                      type="text"
+                      placeholder="Enter player name"
+                    />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        this.handleAddNewPlayer(this.state.newPlayerName)
+                      }
+                      className="small"
+                    >
+                      Add Player
+                    </button>
+                  </div>
+                ) : (
+                  ''
+                )}
                 {this.state.playersSet ? <h3>Cans earned</h3> : ''}
                 {this.state.playersSet
                   ? players.map((player, index) => {
@@ -116,6 +139,13 @@ class App extends Component {
                               className="dropPlayer"
                             >
                               Leave
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => this.setThreeMan(index)}
+                              className="dropPlayer setThreeManButton"
+                            >
+                              3MAN
                             </button>
                           </h4>
                           {this.showCans(
@@ -132,7 +162,6 @@ class App extends Component {
             </td>
           </tr>
         </table>
-
         <div className="mainApp">
           <h1 className="titleTop">
             {this.state.threeMan !== null
@@ -200,7 +229,7 @@ class App extends Component {
                   >
                     Add Player
                   </button>
-                  <button className="big">Vamonos</button>
+                  <button className="big">Léo</button>
                 </form>
               </div>
             )}
@@ -224,9 +253,45 @@ class App extends Component {
                 <span>
                   <h2>{!speeding ? this.state.promptTextSum : ''}</h2>
                   {givingSips ? (
-                    <h2>
-                      Who do you want to give {this.state.rolls[0] * 2} sips to?
-                    </h2>
+                    <span>
+                      {makingRule ? (
+                        <div className="makeRule">
+                          Make a rule with number showing on a dice
+                          {[1, 2, 3, 4, 5, 6].map((number) => {
+                            return (
+                              <button
+                                key={number}
+                                onClick={() => this.setDieRule(number)}
+                                className="diceRule" //was button
+                              >
+                                {number}
+                              </button>
+                            );
+                          })}
+                          <br />
+                          Make a rule with the total of the roll
+                          {[2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(
+                            (number) => {
+                              return (
+                                <button
+                                  key={number}
+                                  onClick={() => this.setDiceTotalRule(number)}
+                                  className="diceRule" //was button
+                                >
+                                  {number}
+                                </button>
+                              );
+                            },
+                          )}
+                        </div>
+                      ) : (
+                        ''
+                      )}
+                      <h2>
+                        Who do you want to give {this.state.rolls[0] * 2} sips
+                        to?
+                      </h2>
+                    </span>
                   ) : (
                     ''
                   )}
@@ -275,21 +340,6 @@ class App extends Component {
 
           {/* here */}
         </div>
-        <div className="addPlayer">
-          <input
-            onChange={(value) => this.handlePlayerName(value)}
-            className="smallInput"
-            type="text"
-            placeholder="Enter player name"
-          />
-          <button
-            type="button"
-            onClick={() => this.handleAddNewPlayer(this.state.newPlayerName)}
-            className="small"
-          >
-            Add Player
-          </button>
-        </div>
       </div>
     );
   }
@@ -313,7 +363,74 @@ class App extends Component {
     speedGun: 0,
     speeding: false,
     newPlayerName: null,
+    makingRule: false,
+    customRules: [''],
+    rollTotalsWithRules: {
+      2: false,
+      3: false,
+      4: false,
+      5: false,
+      6: false,
+      7: false,
+      8: false,
+      9: false,
+      10: false,
+      11: false,
+      12: false,
+    },
+    dieWithRules: {
+      1: false,
+      2: false,
+      3: false,
+      4: false,
+      5: false,
+      6: false,
+    },
   };
+
+  validateIntegerInput(input, floor = 0, ceiling = 99999) {
+    return !isNaN(input) || input >= floor || input <= ceiling;
+  }
+
+  checkHasRule(useTotalOfRoll, value) {
+    //useTotalOfRule is a boolean, false indicates that the rule has to be checked for individual dice, true just checks the total
+    const { dieWithRules, rollTotalsWithRules } = this.state;
+    if (useTotalOfRoll) {
+      return rollTotalsWithRules[value];
+    } else {
+      console.log(dieWithRules[value]);
+      return dieWithRules[value];
+    }
+  }
+  setDieRule(number) {
+    const { dieWithRules } = this.state;
+    let newRules = dieWithRules;
+    newRules[number] = true;
+    let makingRule = false;
+    let givingSips = false;
+    let promptTextSum = 'Rule made!';
+    this.setState({
+      dieWithRules: newRules,
+      makingRule,
+      givingSips,
+      promptTextSum,
+    });
+  }
+
+  setDiceTotalRule(number) {
+    const { rollTotalsWithRules } = this.state;
+    let newRules = rollTotalsWithRules;
+    newRules[number] = true;
+    let makingRule = false;
+    let givingSips = false;
+    let promptTextSum = 'Rule made!';
+    this.setState({
+      rollTotalsWithRules: newRules,
+      makingRule,
+      givingSips,
+      promptTextSum,
+    });
+  }
 
   handleAddNewPlayer(newPlayerName) {
     this.setState({
@@ -431,6 +548,10 @@ class App extends Component {
   };
 
   handleRemovePlayer = (idx) => () => {
+    const { playersSet, players } = this.state;
+    if (playersSet && players.length === 1) {
+      return;
+    }
     this.setState({
       players: this.state.players.filter((s, sidx) => idx !== sidx),
     });
@@ -451,6 +572,9 @@ class App extends Component {
       rolls[i] = Math.floor(Math.random() * 6) + 1;
       rollSum += rolls[i];
     }
+    rolls[0] = 6;
+    rolls[1] = 6;
+    rollSum = 12;
     let givenSips = '';
     let givingSips = false;
     let cannable = true;
@@ -500,10 +624,12 @@ class App extends Component {
   getResult() {
     var text;
     let { rollSum, rolls, currentPlayer, players } = this.state;
+    let useTotalOfRoll = true;
     switch (rollSum) {
       case 2:
         if (rolls[0] === 1) {
           text = 'You drink.\n';
+          this.addSips(currentPlayer, currentPlayer, 1);
         } else {
           text = '';
         }
@@ -518,7 +644,7 @@ class App extends Component {
         break;
       case 7:
         text =
-          'Person before you, (' +
+          'Person before you (' +
           this.getPlayerBeforeName(players, currentPlayer) +
           ') drinks.\n\n';
         this.addSips(
@@ -539,12 +665,15 @@ class App extends Component {
         );
         break;
       case 12:
-        text = 'Make a new rule or';
+        text = 'Make a new rule.';
         this.makeRule();
         break;
       default:
         text = '';
         break;
+    }
+    if (this.checkHasRule(useTotalOfRoll, rollSum)) {
+      text += '\nCustom rule in effect!\n';
     }
     text = this.checkEachDice(text);
     if (text.length === 0) {
@@ -561,20 +690,28 @@ class App extends Component {
   checkEachDice(text) {
     const { threeMan, players, rolls, currentPlayer } = this.state;
     let addedText = text;
+    let useTotalOfRoll = false;
     addedText += rolls
       .map((roll, index) => {
+        let returnedText = '';
+        if (this.checkHasRule(useTotalOfRoll, roll)) {
+          returnedText += '\nCustom rule in effect!\n';
+        }
         switch (roll) {
           case 3:
             if (threeMan === null) return '';
             this.addSips(currentPlayer, threeMan, 1);
-            return (
-              '\nThree man (' + players[threeMan].name + ') you drink.\n\n'
-            );
+            returnedText +=
+              '\nThree man (' + players[threeMan].name + ') you drink.\n\n';
+            break;
           default:
-            return '';
+            returnedText += '';
+            break;
         }
+        return returnedText;
       })
       .join('');
+
     if (this.checkPair(rolls) && addedText === '') {
       addedText = '-1';
     }
@@ -685,6 +822,10 @@ class App extends Component {
 
   displayRuleSips(playerNum) {
     let { players, sipsFromRule, currentPlayer } = this.state;
+    if (!this.validateIntegerInput(sipsFromRule)) {
+      return;
+    }
+
     console.log('sips from rule: ' + sipsFromRule);
     this.addSips(currentPlayer, playerNum, parseInt(sipsFromRule));
     const ruleSips =
@@ -705,7 +846,11 @@ class App extends Component {
     });
   }
 
-  makeRule() {}
+  makeRule() {
+    this.setState({
+      makingRule: true,
+    });
+  }
 
   setNextPlayer = () => {
     let currentPlayer = 0;
