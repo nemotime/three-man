@@ -6,14 +6,16 @@ import three from './assets/three.png';
 import four from './assets/four.png';
 import five from './assets/five.png';
 import six from './assets/six.png';
+import diceGif from './assets/dice.gif';
+import can from './assets/L50.png';
 
 /*
 #######################
 ORDER OF PRIORITY
 #######################
-1. Program for giving sips to desired player, update player sips using prevState
 
-2. Simulate dice rolling
+
+2. Speeding
 
 3. Demineur for placing mines to cancel a roll, count how many sips people have drank and grant them a "CAN" to mine people's rolls
 People who are mined have a % chance to hit the mine
@@ -36,6 +38,9 @@ e.g. When 4 total is rolled, give sips (4 sips)
 ###############################
 Player order: Have player order for 7's 11's etc
 State for players, state for 3-man
+1. Program for giving sips to desired player, update player sips using prevState
+
+2. Simulate dice rolling
 
 */
 
@@ -43,116 +48,189 @@ class App extends Component {
   render() {
     const playerCount = this.state.players.filter((player) => player.name)
       .length;
-    const { players, currentPlayer, givingSips, givenSips } = this.state;
+    const SIPSINACAN = 16;
+    const {
+      players,
+      currentPlayer,
+      givingSips,
+      givenSips,
+      ruleSips,
+      rolling,
+    } = this.state;
     return (
       <div className="App">
-        <h1 className="titleTop">
-          {this.state.threeMan !== null
-            ? this.state.players[this.state.threeMan].name + ' is '
-            : ''}
-          <span className="three">Three</span>
-          <span className="man">man</span>
-        </h1>
-        <h2>
-          Player order:{' '}
-          {this.state.players.map((player, index) => (
-            <span>
-              {player.name}
-              {index === playerCount - 1 || playerCount === 0 ? '' : ', '}
+        <div className="sidebar">
+          <h2>{ruleSips}</h2>
+          {this.state.playersSet ? (
+            <span className="ruleHolder">
+              <h3>Give rule sips</h3>
+              <input
+                onChange={(value) => this.handleSipChange(value)}
+                className="smallInput"
+                type="text"
+                placeholder="# sips"
+              />
             </span>
-          ))}
-        </h2>
-        {this.state.playersSet ? (
-          <h1 className="turnPlaceholder">
-            {this.state.players[this.state.currentPlayer].name}
-            's turn
-          </h1>
-        ) : (
-          ''
-        )}
-        <div className="buttons">
-          {this.state.playersSet ? (
-            [1, 2].map((number) => {
-              let text = number === 1 ? 'die' : 'dice';
-              return (
-                <button
-                  key={number}
-                  onClick={() => this.diceRoll(number)}
-                  className="button"
-                >
-                  {number} {text}
-                </button>
-              );
-            })
-          ) : (
-            <div>
-              <h2>Please enter player names to start</h2>
-              <form onSubmit={this.handleSubmit}>
-                {this.state.players.map((player, idx) => (
-                  <div className="player">
-                    <input
-                      type="text"
-                      placeholder={`Player #${idx + 1} name`}
-                      value={player.name}
-                      onChange={this.handlePlayerNameChange(idx)}
-                    />
-                    <button
-                      type="button"
-                      onClick={this.handleRemovePlayer(idx)}
-                      className="small"
-                    >
-                      -
-                    </button>
-                  </div>
-                ))}
-                <button
-                  type="button"
-                  onClick={this.handleAddPlayer}
-                  className="small"
-                >
-                  Add Player
-                </button>
-                <button>Vamonos</button>
-              </form>
-            </div>
-          )}
-          {this.state.playersSet ? (
-            <button className="endButton" onClick={this.setNextPlayer}>
-              End Turn
-            </button>
           ) : (
             ''
           )}
-        </div>
-        <h1>
-          {this.state.playersSet && this.state.rollSum
-            ? this.state.players[this.state.currentPlayer].name + "'s roll:"
+          {this.state.playersSet
+            ? players.map((player, index) => {
+                return (
+                  <div>
+                    <button
+                      key={index}
+                      onClick={() => this.displayRuleSips(index)}
+                      className="ruleSips"
+                    >
+                      {players[index].name}
+                    </button>
+                  </div>
+                );
+              })
             : ''}
-        </h1>
-        <h2>{this.state.promptTextSum}</h2>
-        {givingSips ? (
-          <h2>Who do you want to give {this.state.rolls[0] * 2} sips to?</h2>
-        ) : (
-          ''
-        )}
-        {givingSips
-          ? players.map((player, index) => {
-              if (player === players[currentPlayer]) return '';
-              return (
-                <button
-                  key={index}
-                  onClick={() => this.displayGivenSips(index)}
-                  className="sipGiver"
-                >
-                  {players[index].name}
-                </button>
-              );
-            })
-          : ''}
-        <h2>{givenSips}</h2>
-        {this.state.rolls.map((roll, index) => (
-          <DiceImage roll={roll} key={index} />
-        ))}
+          <h3>Cans earned</h3>
+          {this.state.playersSet
+            ? players.map((player, index) => {
+                return (
+                  <div>
+                    <h4>
+                      {player.name} Sips Taken:{player.sipsTaken}
+                    </h4>
+                    {this.showCans(
+                      parseInt(
+                        player.sipsTaken / SIPSINACAN - player.minesUsed,
+                      ),
+                      index,
+                    )}
+                  </div>
+                );
+              })
+            : ''}
+        </div>
+        <div className="mainApp">
+          <h1 className="titleTop">
+            {this.state.threeMan !== null
+              ? this.state.players[this.state.threeMan].name + ' is '
+              : ''}
+            <span className="three">Three</span>
+            <span className="man">man</span>
+          </h1>
+          <h2>
+            Player order:{' '}
+            {this.state.players.map((player, index) => (
+              <span>
+                {player.name}
+                {index === playerCount - 1 || playerCount === 0 ? '' : ', '}
+              </span>
+            ))}
+          </h2>
+          {this.state.playersSet ? (
+            <h1 className="turnPlaceholder">
+              {this.state.players[this.state.currentPlayer].name}
+              's turn
+            </h1>
+          ) : (
+            ''
+          )}
+          <div className="buttons">
+            {this.state.playersSet ? (
+              [1, 2].map((number) => {
+                let text = number === 1 ? 'die' : 'dice';
+                return (
+                  <button
+                    key={number}
+                    onClick={() => this.diceRoll(number)}
+                    className="button"
+                  >
+                    {number} {text}
+                  </button>
+                );
+              })
+            ) : (
+              <div>
+                <h2>Please enter player names to start</h2>
+                <form className="playerForm" onSubmit={this.handleSubmit}>
+                  {this.state.players.map((player, idx) => (
+                    <div className="player">
+                      <input
+                        type="text"
+                        placeholder={`Player #${idx + 1} name`}
+                        value={player.name}
+                        onChange={this.handlePlayerNameChange(idx)}
+                      />
+                      <button
+                        type="button"
+                        onClick={this.handleRemovePlayer(idx)}
+                        className="small"
+                      >
+                        -
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={this.handleAddPlayer}
+                    className="small"
+                  >
+                    Add Player
+                  </button>
+                  <button className="big">Vamonos</button>
+                </form>
+              </div>
+            )}
+            {this.state.playersSet ? (
+              <button className="endButton" onClick={this.setNextPlayer}>
+                End Turn
+              </button>
+            ) : (
+              ''
+            )}
+          </div>
+          <h1>
+            {this.state.playersSet && this.state.rollSum
+              ? this.state.players[this.state.currentPlayer].name + "'s roll:"
+              : ''}
+          </h1>
+          {/* here */}
+          {!rolling ? (
+            <span>
+              <h2>{this.state.promptTextSum}</h2>
+              {givingSips ? (
+                <h2>
+                  Who do you want to give {this.state.rolls[0] * 2} sips to?
+                </h2>
+              ) : (
+                ''
+              )}
+              {givingSips
+                ? players.map((player, index) => {
+                    if (player === players[currentPlayer]) return '';
+                    return (
+                      <button
+                        key={index}
+                        onClick={() => this.displayGivenSips(index)}
+                        className="sipGiver"
+                        type="button"
+                      >
+                        {players[index].name}
+                      </button>
+                    );
+                  })
+                : ''}
+              <h2>{givenSips}</h2>
+              {this.state.rolls.map((roll, index) => (
+                <DiceImage roll={roll} key={index} />
+              ))}
+            </span>
+          ) : (
+            <span>
+              <img className="rollingDice" alt="rolling dice" src={diceGif} />
+              <img className="rollingDice" alt="rolling dice" src={diceGif} />
+            </span>
+          )}
+          {/* here */}
+        </div>
       </div>
     );
   }
@@ -162,14 +240,73 @@ class App extends Component {
     rollSum: null,
     promptTextSum: '',
     playersSet: false,
-    players: [{ name: '', sips: 0 }],
+    players: [{ name: '', sipsTaken: 0, minesUsed: 0, minesNearby: 0 }],
     currentPlayer: 0,
     threeMan: null,
     givingSips: false,
     givenSips: '',
     sipsCirculating: 0,
+    ruleSips: '',
+    sipsFromRule: null,
+    rolling: false,
+    cannable: false,
+    mined: false,
   };
 
+  mineSomeone(minerID, minedID) {
+    let { cannable, players } = this.state;
+    let cannableNew = false;
+    if (!cannable) {
+      return;
+    } else {
+      let newPlayers = players;
+      newPlayers[minerID].minesUsed++;
+      newPlayers[minedID].minesNearby++;
+      this.setState({
+        players: newPlayers,
+        cannable: cannableNew,
+      });
+    }
+  }
+
+  addSips(fromID, toID, sips) {
+    let playersCopy = this.state.players;
+    playersCopy[toID].sipsTaken += sips;
+    console.log(
+      playersCopy[toID].name +
+        'has taken total: ' +
+        playersCopy[toID].sipsTaken +
+        ' sips.',
+    );
+    this.setState({
+      players: playersCopy,
+    });
+  }
+
+  showCans(number, player) {
+    return <div>{this.amountOfCans(number, player)}</div>;
+  }
+
+  amountOfCans(i, player) {
+    let { currentPlayer } = this.state;
+    let cans = [];
+    console.log(i);
+    if (i === 0) {
+      return;
+    }
+    while (i > 0) {
+      cans.push(
+        <img
+          onClick={() => this.mineSomeone(player, currentPlayer)}
+          className="can"
+          alt="can"
+          src={can}
+        />,
+      );
+      i--;
+    }
+    return cans;
+  }
   whoRolled() {
     if (this.state.currentPlayer - 1 === -1) {
       return this.state.players.filter((player) => player.name).length - 1;
@@ -195,7 +332,9 @@ class App extends Component {
 
   handleAddPlayer = () => {
     this.setState({
-      players: this.state.players.concat([{ name: '' }]),
+      players: this.state.players.concat([
+        { name: '', sipsTaken: 0, minesUsed: 0, minesNearby: 0 },
+      ]),
     });
   };
 
@@ -204,7 +343,15 @@ class App extends Component {
       players: this.state.players.filter((s, sidx) => idx !== sidx),
     });
   };
+
+  diceAnim(timeout) {
+    this.setState({ rolling: true });
+    setTimeout(() => {
+      this.setState({ rolling: false });
+    }, timeout);
+  }
   diceRoll = (numberOfDice) => {
+    this.diceAnim(1000);
     let rolls = [];
     let rollSum = 0;
     for (let i = 0; i < numberOfDice; i++) {
@@ -213,6 +360,7 @@ class App extends Component {
     }
     let givenSips = '';
     let givingSips = false;
+    let cannable = true;
     this.setState(
       {
         numberOfDice,
@@ -220,6 +368,7 @@ class App extends Component {
         rollSum,
         givenSips,
         givingSips,
+        cannable,
       },
       () => {
         this.getResult();
@@ -253,15 +402,25 @@ class App extends Component {
         break;
       case 7:
         text =
-          'Person before you, ' +
+          'Person before you, (' +
           this.getPlayerBeforeName(players, currentPlayer) +
-          ', drinks.\n\n';
+          ') drinks.\n\n';
+        this.addSips(
+          currentPlayer,
+          this.getPlayerBeforeID(players, currentPlayer),
+          1,
+        );
         break;
       case 11:
         text =
-          'Person after you, ' +
+          'Person after you (' +
           this.getPlayerAfterName(players, currentPlayer) +
-          ', drinks.\n\n';
+          ') drinks.\n\n';
+        this.addSips(
+          currentPlayer,
+          this.getPlayerAfterID(players, currentPlayer),
+          1,
+        );
         break;
       case 12:
         text = 'Make a new rule or';
@@ -283,16 +442,16 @@ class App extends Component {
   }
 
   checkEachDice(text) {
-    const { threeMan, players, rolls } = this.state;
+    const { threeMan, players, rolls, currentPlayer } = this.state;
     let addedText = text;
     addedText += rolls
       .map((roll, index) => {
-        console.log(roll);
         switch (roll) {
           case 3:
             if (threeMan === null) return '';
+            this.addSips(currentPlayer, threeMan, 1);
             return (
-              '\nThree man, ' + players[threeMan].name + ', you drink.\n\n'
+              '\nThree man (' + players[threeMan].name + ') you drink.\n\n'
             );
           default:
             return '';
@@ -305,10 +464,12 @@ class App extends Component {
     return addedText;
   }
   checkPair(rolls) {
+    const { threeMan, currentPlayer } = this.state;
     if (rolls.length > 1) {
       if (rolls[0] === rolls[1] && rolls[0] !== 1) {
-        if (rolls[0] === 3) {
+        if (rolls[0] === 3 && threeMan !== null) {
           const givenSips = 'Three man take 6 more sips\n';
+          this.addSips(currentPlayer, threeMan, 6);
           this.setState({
             givenSips,
           });
@@ -339,6 +500,21 @@ class App extends Component {
     }
     return players[playerBefore].name;
   }
+  getPlayerAfterID(players, currentPlayer) {
+    let playerAfter = 0;
+    if (currentPlayer !== players.filter((player) => player.name).length - 1) {
+      playerAfter = currentPlayer + 1;
+    }
+    return playerAfter;
+  }
+
+  getPlayerBeforeID(players, currentPlayer) {
+    let playerBefore = players.length - 1;
+    if (currentPlayer !== 0) {
+      playerBefore = currentPlayer - 1;
+    }
+    return playerBefore;
+  }
   giveSelfSip(sips) {}
 
   giveSomeoneSips(sips) {
@@ -348,18 +524,7 @@ class App extends Component {
       givingSips,
       sipsCirculating,
     });
-
-    // const { players, currentPlayer } = this.state;
-    // players.map((player, index) => {
-    //   if (player === players[currentPlayer]) return '';
-    //   return (
-    //     <button
-    //       key={index}
-    //       onClick={() => this.displayGivenSips(index)}
-    //     ></button>
-    //   );
-    // });
-  } //in this one, let the player choose who
+  }
 
   displayGivenSips(playerNum) {
     let { players, currentPlayer, sipsCirculating } = this.state;
@@ -372,12 +537,38 @@ class App extends Component {
       '.';
     const givingSips = false;
     const promptTextSum = '';
+    this.addSips(currentPlayer, playerNum, sipsCirculating);
+    let cannable = false;
     this.setState({
       givenSips,
       givingSips,
       promptTextSum,
+      cannable,
     });
   }
+
+  displayRuleSips(playerNum) {
+    let { players, sipsFromRule, currentPlayer } = this.state;
+    console.log('sips from rule: ' + sipsFromRule);
+    this.addSips(currentPlayer, playerNum, parseInt(sipsFromRule));
+    const ruleSips =
+      players[playerNum].name +
+      ' took ' +
+      sipsFromRule +
+      (sipsFromRule === '1'
+        ? " sip because they can't follow rules."
+        : " sips because they can't follow rules.");
+    this.setState({
+      ruleSips,
+    });
+  }
+
+  handleSipChange(evt) {
+    this.setState({
+      sipsFromRule: evt.target.value,
+    });
+  }
+
   makeRule() {}
 
   setNextPlayer = () => {

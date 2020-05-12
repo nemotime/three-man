@@ -13,6 +13,55 @@
   }
 }
 
+.can {
+  height: 49px;
+  width: 25px;
+  margin: 0 2px 0 2px;
+}
+.rollingDice {
+  width: 90px;
+  height: 90px;
+  margin: 0 10px 0 10px;
+}
+.sidebar {
+  color: white;
+  width: 460px;
+  float: right;
+}
+.smallInput {
+  width: 60px;
+  margin: auto;
+  margin-bottom: 20px;
+}
+
+.ruleSips {
+  background-color: #d69303;
+  border: 2px solid black;
+  border-radius: 5px;
+  color: white;
+  text-decoration: none;
+  font-size: 18px;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+form input {
+  display: block;
+  font-size: 20px;
+  padding: 5px 10px;
+  margin: 10px 0;
+  border-radius: 5px;
+  border: 1px solid #ddd;
+}
+
+.ruleHolder input {
+  font-size: 20px;
+  padding: 5px 10px;
+  margin-bottom: 20px;
+  border-radius: 5px;
+  border: 1px solid #ddd;
+}
+
 .App-header {
   background-color: #282c34;
   min-height: 100vh;
@@ -37,7 +86,7 @@
   }
 }
 
-.App {
+.mainApp {
   text-align: center;
   border: 1px solid grey;
   background-color: #1b1b1b;
@@ -112,21 +161,11 @@ body {
   background-color: black;
 }
 
-form input {
-  display: block;
-  width: 100%;
-  font-size: 20px;
-  padding: 5px 10px;
-  margin: 10px 0;
-  border-radius: 5px;
-  border: 1px solid #ddd;
-}
-
-form input.error {
+.playerForm input.error {
   border-color: red;
 }
 
-form button {
+.playerForm button {
   display: block;
   width: 100%;
   appearance: none;
@@ -139,16 +178,16 @@ form button {
   margin-top: 30px;
 }
 
-form button:hover {
+.playerForm button:hover {
   background-color: rgb(172, 112, 0);
 }
 
-form button:disabled {
+.playerForm button:disabled {
   background-color: #dbf99f;
   color: #333;
 }
 
-form button.small {
+.playerForm button.small {
   display: inline-block;
   width: auto;
   padding: 0 20px;
@@ -156,13 +195,15 @@ form button.small {
   font-size: 14px;
 }
 
-form button.small:hover {
+.playerForm button.small:hover {
   background-color: #999;
 }
-
+.playerForm input {
+  width: 100%;
+}
 .player {
   display: flex;
-  direction: row;
+  flex-direction: row;
   align-items: center;
 }
 
