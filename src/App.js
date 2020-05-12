@@ -13,8 +13,6 @@ import can from './assets/L50.png';
 #######################
 ORDER OF PRIORITY
 #######################
-1. Mid-game drop in drop out
-
 4. Allow input for rules, states for it
 Parse for "next player" and "previous player" maybe RANDOM PLAYER?
 
@@ -36,6 +34,8 @@ e.g. When 4 total is rolled, give sips (4 sips)
 Player order: Have player order for 7's 11's etc
 State for players, state for 3-man
 1. Program for giving sips to desired player, update player sips using prevState
+
+1. Mid-game drop in drop out
 
 2. Simulate dice rolling
 
@@ -275,6 +275,21 @@ class App extends Component {
 
           {/* here */}
         </div>
+        <div className="addPlayer">
+          <input
+            onChange={(value) => this.handlePlayerName(value)}
+            className="smallInput"
+            type="text"
+            placeholder="Enter player name"
+          />
+          <button
+            type="button"
+            onClick={() => this.handleAddNewPlayer(this.state.newPlayerName)}
+            className="small"
+          >
+            Add Player
+          </button>
+        </div>
       </div>
     );
   }
@@ -297,8 +312,22 @@ class App extends Component {
     mined: false,
     speedGun: 0,
     speeding: false,
+    newPlayerName: null,
   };
 
+  handleAddNewPlayer(newPlayerName) {
+    this.setState({
+      players: this.state.players.concat([
+        { name: newPlayerName, sipsTaken: 0, minesUsed: 0, minesNearby: 0 },
+      ]),
+    });
+  }
+
+  handlePlayerName(evt) {
+    this.setState({
+      newPlayerName: evt.target.value,
+    });
+  }
   mineSomeone(minerID, minedID) {
     let { cannable, players } = this.state;
     let cannableNew = false;

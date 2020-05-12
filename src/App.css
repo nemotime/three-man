@@ -192,11 +192,44 @@ body {
   background-color: black;
 }
 
+.addPlayer button.small {
+  display: inline-block;
+  width: auto;
+  padding: 0 20px;
+  background-color: rgb(27, 136, 27);
+  font-size: 14px;
+}
+
+.addPlayer button.small:hover {
+  background-color: rgb(17, 87, 17);
+}
+
+.addPlayer button {
+  display: block;
+  width: 100%;
+  appearance: none;
+  border-radius: 5px;
+  background-color: #d69303;
+  color: #fff;
+  border: none;
+  font-size: 16px;
+  height: 40px;
+  margin-top: 30px;
+}
+
+.addPlayer .smallInput {
+  width: 200px;
+  font-size: 20px;
+  padding: 5px 10px;
+  margin: 10px 10px;
+  border-radius: 5px;
+  border: 1px solid #ddd;
+}
 .dropPlayer {
   display: inline-block;
   width: auto;
   padding: 0 20px;
-  background-color: #777;
+  background-color: rgb(119, 119, 119);
   font-size: 14px;
   border-radius: 10px;
   color: white;
