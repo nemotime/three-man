@@ -1,4 +1,4 @@
-import React, { Component, Dialog } from 'react';
+import React, { Component } from 'react';
 import './App.css';
 import one from './assets/one.png';
 import two from './assets/two.png';
@@ -14,12 +14,25 @@ import can from './assets/L50.png';
 ORDER OF PRIORITY
 #######################
 
-1. Dice Stats
-Times rolled a # (per person, in the game)
-#3 man sips taken
+BUG: MINES CANT BLOCK THE GAME FROM GIVING BASE RULE SIPS e.g. (1,1), 7's, 11's (3,3) AND DONT REVERSE THE SPEED GUN
+
+
+0.1 Split dice on double
+
+1.69 If nothing happens only end turn
+
+1.69420 roll off table scales with sips
 
 4. Allow input for rules, states for it
 Parse for "next player" and "previous player" maybe RANDOM PLAYER?
+
+4.5. Remove rule button
+
+6. Warn about mines around you
+
+1. Dice Stats
+Times rolled a # (per person, in the game)
+#3 man sips taken
 
 FORMAT:
 ###########################################################################
@@ -36,6 +49,9 @@ e.g. When 4 total is rolled, give sips (4 sips)
 ###############################
 Player order: Have player order for 7's 11's etc
 State for players, state for 3-man
+
+0.01 FLAG PLAYERS IF THEY LEAVE THE GAME, UNFLAG IF THEY COME BACK? DONT DISPLAY FLAGGED PLAYERS
+
 1. Program for giving sips to desired player, update player sips using prevState
 
 1. Mid-game drop in drop out
@@ -71,289 +87,334 @@ class App extends Component {
       makingRule,
       rollTotalsWithRules,
       dieWithRules,
+      showingStats,
     } = this.state;
+    let mainAppClass = 'mainApp';
+    let overlayClass = '';
+    // if (players[currentPlayer].name === 'Moose') {
+    //   overlayClass += 'overlay';
+    //   mainAppClass += ' moose';
+    // }
     return (
       <div className="App">
         <table className="sidebar">
-          <tr>
-            <td className="tableRules">
-              <div className="sidebar1">
-                <h2>{ruleSips}</h2>
-                {this.state.playersSet ? (
-                  <span className="ruleHolder">
-                    <h3>Give rule sips</h3>
-                    <input
-                      onChange={(value) => this.handleSipChange(value)}
-                      className="smallInput"
-                      type="text"
-                      placeholder="# sips"
-                    />
-                  </span>
-                ) : (
-                  ''
-                )}
-                {this.state.playersSet
-                  ? players.map((player, index) => {
-                      return (
-                        <div>
-                          <button
-                            key={index}
-                            onClick={() => this.displayRuleSips(index)}
-                            className="ruleSips"
-                          >
-                            {players[index].name}
-                          </button>
-                        </div>
-                      );
-                    })
+          <tbody>
+            <tr>
+              <td className="tableRules">
+                <div className="sidebar1">
+                  <h2>{ruleSips}</h2>
+                  {this.state.playersSet ? (
+                    <span className="ruleHolder">
+                      <h3>Give rule sips</h3>
+                      <input
+                        onChange={(value) => this.handleSipChange(value)}
+                        className="smallInput"
+                        type="text"
+                        placeholder="# sips"
+                      />
+                    </span>
+                  ) : (
+                    ''
+                  )}
+                  {this.state.playersSet
+                    ? players.map((player, index) => {
+                        //@@@@@@@@@@@@@@dont display flagged players@@@@@@@@@@@@@@
+                        if (player.removedFromGame) {
+                          return '';
+                        }
+                        return (
+                          <div>
+                            <button
+                              key={index}
+                              onClick={() => this.displayRuleSips(index)}
+                              className="ruleSips"
+                            >
+                              {players[index].name}
+                            </button>
+                          </div>
+                        );
+                      })
+                    : ''}
+                </div>
+              </td>
+              <td className="tableCans">
+                <div className="sidebar2">
+                  {this.state.playersSet ? (
+                    <div className="addPlayer">
+                      <input
+                        onChange={(value) => this.handlePlayerName(value)}
+                        className="smallInput"
+                        type="text"
+                        placeholder="Enter player name"
+                      />
+                      <button
+                        type="button"
+                        onClick={() =>
+                          this.handleAddNewPlayer(this.state.newPlayerName)
+                        }
+                        className="small"
+                      >
+                        Add Player
+                      </button>
+                    </div>
+                  ) : (
+                    ''
+                  )}
+                  {this.state.playersSet ? <h3>Cans earned</h3> : ''}
+                  {this.state.playersSet
+                    ? players.map((player, index) => {
+                        //@@@@@@@@@@@@@don't display flagged players@@@@@@@@@@@@@@
+                        if (player.removedFromGame) {
+                          return '';
+                        }
+                        return (
+                          <div>
+                            <h4>
+                              {player.name} took {player.sipsTaken} sips.&nbsp;
+                              <button
+                                type="button"
+                                onClick={this.handleRemovePlayer(index)}
+                                className="dropPlayer"
+                              >
+                                Leave
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => this.setThreeMan(index)}
+                                className="dropPlayer setThreeManButton"
+                              >
+                                3MAN
+                              </button>
+                            </h4>
+                            {this.showCans(
+                              parseInt(
+                                player.sipsTaken / SIPSINACAN -
+                                  player.minesUsed,
+                              ),
+                              index,
+                            )}
+                          </div>
+                        );
+                      })
+                    : ''}
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <div className={mainAppClass}>
+          <div className={overlayClass}>
+            <div className="titleHolder">
+              <h1 className="titleTop">
+                {this.state.threeMan !== null
+                  ? this.state.players[this.state.threeMan].name + ' is '
                   : ''}
-              </div>
-            </td>
-            <td className="tableCans">
-              <div className="sidebar2">
-                {this.state.playersSet ? (
-                  <div className="addPlayer">
-                    <input
-                      onChange={(value) => this.handlePlayerName(value)}
-                      className="smallInput"
-                      type="text"
-                      placeholder="Enter player name"
-                    />
+                <span className="three">Three</span>
+                <span className="man">man</span>
+              </h1>
+            </div>
+            <h2>
+              Player order:{' '}
+              {this.state.players.map((
+                player,
+                index, //@@@@@@@@@@@don't display flagged players@@@@@@@@@@@@@@@@@
+              ) =>
+                player.removedFromGame ? (
+                  ''
+                ) : (
+                  <span>
+                    {player.name}
+                    {index === playerCount - 1 || playerCount === 0 ? '' : ', '}
+                  </span>
+                ),
+              )}
+            </h2>
+            {this.state.playersSet ? (
+              <h1 className="turnPlaceholder">
+                {this.state.players[this.state.currentPlayer].name}'s turn
+              </h1>
+            ) : (
+              ''
+            )}
+            <div className="buttons">
+              {this.state.playersSet ? (
+                [1, 2].map((number) => {
+                  let text = number === 1 ? 'die' : 'dice';
+                  return (
+                    <button
+                      key={number}
+                      onClick={() => this.diceRoll(number)}
+                      className="button"
+                      disabled={rolling}
+                    >
+                      {number} {text}
+                    </button>
+                  );
+                })
+              ) : (
+                <div>
+                  <h2>Please enter player names to start</h2>
+                  <form className="playerForm" onSubmit={this.handleSubmit}>
+                    {this.state.players.map((player, idx) => (
+                      <div className="player">
+                        <input
+                          type="text"
+                          placeholder={`Player #${idx + 1} name`}
+                          value={player.name}
+                          onChange={this.handlePlayerNameChange(idx)}
+                        />
+                        <button
+                          type="button"
+                          onClick={this.handleRemovePlayer(idx)}
+                          className="small"
+                        >
+                          -
+                        </button>
+                      </div>
+                    ))}
                     <button
                       type="button"
-                      onClick={() =>
-                        this.handleAddNewPlayer(this.state.newPlayerName)
-                      }
+                      onClick={this.handleAddPlayer}
                       className="small"
                     >
                       Add Player
                     </button>
-                  </div>
-                ) : (
-                  ''
-                )}
-                {this.state.playersSet ? <h3>Cans earned</h3> : ''}
-                {this.state.playersSet
-                  ? players.map((player, index) => {
-                      return (
-                        <div>
-                          <h4>
-                            {player.name} took {player.sipsTaken} sips.&nbsp;
-                            <button
-                              type="button"
-                              onClick={this.handleRemovePlayer(index)}
-                              className="dropPlayer"
-                            >
-                              Leave
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => this.setThreeMan(index)}
-                              className="dropPlayer setThreeManButton"
-                            >
-                              3MAN
-                            </button>
-                          </h4>
-                          {this.showCans(
-                            parseInt(
-                              player.sipsTaken / SIPSINACAN - player.minesUsed,
-                            ),
-                            index,
-                          )}
-                        </div>
-                      );
-                    })
-                  : ''}
-              </div>
-            </td>
-          </tr>
-        </table>
-        <div className="mainApp">
-          <h1 className="titleTop">
-            {this.state.threeMan !== null
-              ? this.state.players[this.state.threeMan].name + ' is '
-              : ''}
-            <span className="three">Three</span>
-            <span className="man">man</span>
-          </h1>
-          <h2>
-            Player order:{' '}
-            {this.state.players.map((player, index) => (
-              <span>
-                {player.name}
-                {index === playerCount - 1 || playerCount === 0 ? '' : ', '}
-              </span>
-            ))}
-          </h2>
-          {this.state.playersSet ? (
-            <h1 className="turnPlaceholder">
-              {this.state.players[this.state.currentPlayer].name}
-              's turn
+                    <button className="big">Léo</button>
+                  </form>
+                </div>
+              )}
+              {this.state.playersSet ? (
+                <button
+                  disabled={rolling}
+                  className="endButton"
+                  onClick={this.setNextPlayer}
+                >
+                  End Turn
+                </button>
+              ) : (
+                ''
+              )}
+            </div>
+            <h1>
+              {this.state.playersSet && this.state.rollSum
+                ? this.state.players[this.state.currentPlayer].name + "'s roll:"
+                : ''}
             </h1>
-          ) : (
-            ''
-          )}
-          <div className="buttons">
-            {this.state.playersSet ? (
-              [1, 2].map((number) => {
-                let text = number === 1 ? 'die' : 'dice';
-                return (
-                  <button
-                    key={number}
-                    onClick={() => this.diceRoll(number)}
-                    className="button"
-                  >
-                    {number} {text}
-                  </button>
-                );
-              })
-            ) : (
-              <div>
-                <h2>Please enter player names to start</h2>
-                <form className="playerForm" onSubmit={this.handleSubmit}>
-                  {this.state.players.map((player, idx) => (
-                    <div className="player">
-                      <input
-                        type="text"
-                        placeholder={`Player #${idx + 1} name`}
-                        value={player.name}
-                        onChange={this.handlePlayerNameChange(idx)}
-                      />
-                      <button
-                        type="button"
-                        onClick={this.handleRemovePlayer(idx)}
-                        className="small"
-                      >
-                        -
-                      </button>
-                    </div>
-                  ))}
-                  <button
-                    type="button"
-                    onClick={this.handleAddPlayer}
-                    className="small"
-                  >
-                    Add Player
-                  </button>
-                  <button className="big">Léo</button>
-                </form>
-              </div>
-            )}
-            {this.state.playersSet ? (
-              <button className="endButton" onClick={this.setNextPlayer}>
-                End Turn
-              </button>
-            ) : (
-              ''
-            )}
-          </div>
-          <h1>
-            {this.state.playersSet && this.state.rollSum
-              ? this.state.players[this.state.currentPlayer].name + "'s roll:"
-              : ''}
-          </h1>
-          {/* here */}
-          {!mined ? (
-            <span>
-              {!rolling ? (
-                <span>
-                  <h2>{!speeding ? this.state.promptTextSum : ''}</h2>
-                  {givingSips ? (
-                    <span>
-                      {makingRule ? (
-                        <div className="makeRule">
-                          <h3>Make a rule with number showing on a dice</h3>
-                          {[1, 2, 3, 4, 5, 6].map((number) => {
-                            let diceClassName = 'diceRule';
-                            if (dieWithRules[number]) {
-                              diceClassName += ' diceHasRule';
-                            }
-                            return (
-                              <button
-                                key={number}
-                                onClick={() => this.setDieRule(number)}
-                                className={diceClassName} //was button
-                              >
-                                {number}
-                              </button>
-                            );
-                          })}
-                          <br />
-                          <h3>Make a rule with the total of the roll</h3>
-                          {[2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(
-                            (number) => {
+            {/* here */}
+            {!mined ? (
+              <span>
+                {!rolling ? (
+                  <span>
+                    <h2>{!speeding ? this.state.promptTextSum : ''}</h2>
+                    {givingSips ? (
+                      <span>
+                        {makingRule ? (
+                          <div className="makeRule">
+                            <h3>Make a rule with number showing on a dice</h3>
+                            {[1, 2, 3, 4, 5, 6].map((number) => {
                               let diceClassName = 'diceRule';
-                              if (rollTotalsWithRules[number]) {
+                              if (dieWithRules[number]) {
                                 diceClassName += ' diceHasRule';
                               }
                               return (
                                 <button
                                   key={number}
-                                  onClick={() => this.setDiceTotalRule(number)}
+                                  onClick={() => this.setDieRule(number)}
                                   className={diceClassName} //was button
                                 >
                                   {number}
                                 </button>
                               );
-                            },
-                          )}
-                        </div>
-                      ) : (
-                        ''
-                      )}
-                      <h2>
-                        Who do you want to give {this.state.rolls[0] * 2} sips
-                        to?
-                      </h2>
-                    </span>
-                  ) : (
-                    ''
-                  )}
-                  {givingSips
-                    ? players.map((player, index) => {
-                        if (player === players[currentPlayer]) return '';
-                        return (
-                          <button
-                            key={index}
-                            onClick={() => this.displayGivenSips(index)}
-                            className="sipGiver"
-                            type="button"
-                          >
-                            {players[index].name}
-                          </button>
-                        );
-                      })
-                    : ''}
-                  <h2>{givenSips}</h2>
-                  {this.state.rolls.map((roll, index) => (
-                    <DiceImage roll={roll} key={index} />
-                  ))}
-                </span>
-              ) : (
-                <span>
-                  <img
-                    className="rollingDice"
-                    alt="rolling dice"
-                    src={diceGif}
-                  />
-                  {numberOfDice === 2 ? (
+                            })}
+                            <br />
+                            <h3>Make a rule with the total of the roll</h3>
+                            {[2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(
+                              (number) => {
+                                let diceClassName = 'diceRule';
+                                if (rollTotalsWithRules[number]) {
+                                  diceClassName += ' diceHasRule';
+                                }
+                                return (
+                                  <button
+                                    key={number}
+                                    onClick={() =>
+                                      this.setDiceTotalRule(number)
+                                    }
+                                    className={diceClassName} //was button
+                                  >
+                                    {number}
+                                  </button>
+                                );
+                              },
+                            )}
+                          </div>
+                        ) : (
+                          ''
+                        )}
+                        <h2>
+                          Who do you want to give {this.state.rolls[0] * 2} sips
+                          to?
+                        </h2>
+                      </span>
+                    ) : (
+                      ''
+                    )}
+                    {givingSips
+                      ? players.map((player, index) => {
+                          //@@@@@@@skip players who are flagged@@@@@@@@@
+                          if (player === players[currentPlayer]) return '';
+                          if (player.removedFromGame) {
+                            return '';
+                          }
+                          return (
+                            <button
+                              key={index}
+                              onClick={() => this.displayGivenSips(index)}
+                              className="sipGiver"
+                              type="button"
+                            >
+                              {players[index].name}
+                            </button>
+                          );
+                        })
+                      : ''}
+                    <h2>{givenSips}</h2>
+                    {this.state.rolls.map((roll, index) => (
+                      <DiceImage roll={roll} key={index} />
+                    ))}
+                  </span>
+                ) : (
+                  <span>
                     <img
                       className="rollingDice"
                       alt="rolling dice"
                       src={diceGif}
                     />
-                  ) : (
-                    ''
-                  )}
-                </span>
-              )}
-            </span>
-          ) : (
-            <h2>You got mined, re-roll</h2>
-          )}
+                    {numberOfDice === 2 ? (
+                      <img
+                        className="rollingDice"
+                        alt="rolling dice"
+                        src={diceGif}
+                      />
+                    ) : (
+                      ''
+                    )}
+                  </span>
+                )}
+              </span>
+            ) : (
+              <h2>You got mined, re-roll</h2>
+            )}
 
-          {/* here */}
+            {/* here */}
+          </div>
         </div>
+        {/* <div>
+          <button type="button" onClick={() => this.toggleStats()}>
+            {showingStats ? 'Hide Stats' : 'Show Stats'}
+          </button>
+          {showingStats ? players : ''}
+        </div> */}
       </div>
     );
   }
@@ -363,7 +424,17 @@ class App extends Component {
     rollSum: null,
     promptTextSum: '',
     playersSet: false,
-    players: [{ name: '', sipsTaken: 0, minesUsed: 0, minesNearby: 0 }],
+    players: [
+      {
+        name: '',
+        sipsTaken: 0,
+        minesUsed: 0,
+        minesNearby: 0,
+        timesBecame: 0,
+        timesSip3: 0,
+        removedFromGame: false,
+      },
+    ],
     currentPlayer: 0,
     threeMan: null,
     givingSips: false,
@@ -379,6 +450,7 @@ class App extends Component {
     newPlayerName: null,
     makingRule: false,
     customRules: [''],
+    showingStats: false,
     rollTotalsWithRules: {
       2: false,
       3: false,
@@ -402,6 +474,14 @@ class App extends Component {
     },
   };
 
+  toggleStats() {
+    const { showingStats } = this.state;
+    let opposite = !showingStats;
+    this.setState({
+      showingStats: opposite,
+    });
+  }
+
   validateIntegerInput(input, floor = 0, ceiling = 99999) {
     return !isNaN(input) || input >= floor || input <= ceiling;
   }
@@ -412,7 +492,6 @@ class App extends Component {
     if (useTotalOfRoll) {
       return rollTotalsWithRules[value];
     } else {
-      console.log(dieWithRules[value]);
       return dieWithRules[value];
     }
   }
@@ -449,7 +528,13 @@ class App extends Component {
   handleAddNewPlayer(newPlayerName) {
     this.setState({
       players: this.state.players.concat([
-        { name: newPlayerName, sipsTaken: 0, minesUsed: 0, minesNearby: 0 },
+        {
+          name: newPlayerName,
+          sipsTaken: 0,
+          minesUsed: 0,
+          minesNearby: 0,
+          removedFromGame: false,
+        },
       ]),
     });
   }
@@ -478,7 +563,7 @@ class App extends Component {
   }
 
   calculateHittingMineChance(playerID) {
-    const inverseSipFrequencyFactor = 6;
+    const inverseSipFrequencyFactor = 2.5;
     const { players } = this.state;
     let playerBeforeID = this.getPlayerBeforeID(players, playerID);
     let playerAfterID = this.getPlayerAfterID(players, playerID);
@@ -486,9 +571,14 @@ class App extends Component {
     let playerAfterMines = players[playerAfterID].minesNearby;
     let myMines = players[playerID].minesNearby;
     let odds = 0;
-    odds += 2 ** (myMines / inverseSipFrequencyFactor) - 1;
-    odds += 0.5 * (2 ** (playerBeforeMines / inverseSipFrequencyFactor) - 1);
-    odds += 0.5 * (2 ** (playerAfterMines / inverseSipFrequencyFactor) - 1);
+    odds +=
+      2 **
+        ((myMines + 0.2 * playerBeforeMines + 0.2 * playerAfterMines) /
+          inverseSipFrequencyFactor) -
+      1;
+    if (odds > 15) {
+      odds = 15;
+    }
     console.log('the odds are ' + odds);
     return odds;
   }
@@ -496,12 +586,6 @@ class App extends Component {
   addSips(fromID, toID, sips) {
     let playersCopy = this.state.players;
     playersCopy[toID].sipsTaken += sips;
-    console.log(
-      playersCopy[toID].name +
-        'has taken total: ' +
-        playersCopy[toID].sipsTaken +
-        ' sips.',
-    );
     this.setState({
       players: playersCopy,
     });
@@ -530,13 +614,13 @@ class App extends Component {
     }
     return cans;
   }
-  whoRolled() {
-    if (this.state.currentPlayer - 1 === -1) {
-      return this.state.players.filter((player) => player.name).length - 1;
-    } else {
-      return this.state.currentPlayer - 1;
-    }
-  }
+  // whoRolled() {
+  //   if (this.state.currentPlayer - 1 === -1) {
+  //     return this.state.players.filter((player) => player.name).length - 1;
+  //   } else {
+  //     return this.state.currentPlayer - 1;
+  //   }
+  // }
 
   handlePlayerNameChange = (idx) => (evt) => {
     const newPlayers = this.state.players.map((player, sidx) => {
@@ -556,7 +640,15 @@ class App extends Component {
   handleAddPlayer = () => {
     this.setState({
       players: this.state.players.concat([
-        { name: '', sipsTaken: 0, minesUsed: 0, minesNearby: 0 },
+        {
+          name: '',
+          sipsTaken: 0,
+          minesUsed: 0,
+          minesNearby: 0,
+          timesBecame: 0,
+          timesSip3: 0,
+          removedFromGame: false,
+        },
       ]),
     });
   };
@@ -566,11 +658,20 @@ class App extends Component {
     if (playersSet && players.length === 1) {
       return;
     }
+    let flaggedPlayers = players;
+    flaggedPlayers[idx].removedFromGame = true;
+
     if (idx === threeMan) {
       this.setState({
         threeMan: null,
       });
     }
+
+    if (playersSet) {
+      this.setState({ players: flaggedPlayers });
+      return;
+    }
+
     this.setState({
       players: this.state.players.filter((s, sidx) => idx !== sidx),
     });
@@ -591,9 +692,9 @@ class App extends Component {
       rolls[i] = Math.floor(Math.random() * 6) + 1;
       rollSum += rolls[i];
     }
-    rolls[0] = 6;
+    rolls[0] = 5;
     rolls[1] = 6;
-    rollSum = 12;
+    rollSum = 11;
     let givenSips = '';
     let givingSips = false;
     let cannable = true;
@@ -642,7 +743,7 @@ class App extends Component {
   }
   getResult() {
     var text;
-    let { rollSum, rolls, currentPlayer, players } = this.state;
+    let { rollSum, rolls, currentPlayer, players, numberOfDice } = this.state;
     let useTotalOfRoll = true;
     switch (rollSum) {
       case 2:
@@ -656,27 +757,28 @@ class App extends Component {
       case 3:
         if (rolls[0] === 1 || rolls[0] === 2) {
           text = players[currentPlayer].name + ', you are Three Man.\n';
+          this.incrementTimesBecame3(players, currentPlayer);
           this.setThreeMan(this.state.currentPlayer);
         } else {
           text = '';
         }
         break;
-      case 7:
+      case 11:
         text =
           'Person before you (' +
           this.getPlayerBeforeName(players, currentPlayer) +
-          ') drinks.\n\n';
+          ') drinks 1.\n\n';
         this.addSips(
           currentPlayer,
           this.getPlayerBeforeID(players, currentPlayer),
           1,
         );
         break;
-      case 11:
+      case 7:
         text =
           'Person after you (' +
           this.getPlayerAfterName(players, currentPlayer) +
-          ') drinks.\n\n';
+          ') drinks 1.\n\n';
         this.addSips(
           currentPlayer,
           this.getPlayerAfterID(players, currentPlayer),
@@ -695,7 +797,7 @@ class App extends Component {
       text += '\nCustom rule in effect!\n';
     }
     text = this.checkEachDice(text);
-    if (text.length === 0) {
+    if ((text.length === 0) & (numberOfDice > 1)) {
       text = 'Nothing happens.\n';
     } else if (text === '-1') {
       text = '';
@@ -721,7 +823,7 @@ class App extends Component {
             if (threeMan === null) return '';
             this.addSips(currentPlayer, threeMan, 1);
             returnedText +=
-              '\nThree man (' + players[threeMan].name + ') you drink.\n\n';
+              '\nThree man (' + players[threeMan].name + ') you drink 1.\n\n';
             break;
           default:
             returnedText += '';
@@ -746,7 +848,6 @@ class App extends Component {
         this.setState({
           speedGun: numDoubles,
         });
-        console.log(speedGun);
         if (numDoubles === 3) {
           speeding = true;
           this.setThreeMan(currentPlayer);
@@ -778,33 +879,46 @@ class App extends Component {
     });
   }
   getPlayerAfterName(players, currentPlayer) {
-    let playerAfter = 0;
-    if (currentPlayer !== players.filter((player) => player.name).length - 1) {
-      playerAfter = currentPlayer + 1;
-    }
+    //@@@@@@@remove flagged players@@@@@@@@@@@@
+    let playerAfter = currentPlayer;
+    do {
+      playerAfter =
+        (playerAfter + 1) % players.filter((player) => player.name).length;
+    } while (players[playerAfter].removedFromGame);
     return players[playerAfter].name;
   }
 
   getPlayerBeforeName(players, currentPlayer) {
-    let playerBefore = players.length - 1;
-    if (currentPlayer !== 0) {
-      playerBefore = currentPlayer - 1;
-    }
+    //@@@@@@@@@@@@remove flagged players@@@@@@@@@@@@@@@@@
+    let playerBefore = currentPlayer;
+    do {
+      playerBefore =
+        (((playerBefore - 1) % players.filter((player) => player.name).length) +
+          players.filter((player) => player.name).length) %
+        players.filter((player) => player.name).length;
+    } while (players[playerBefore].removedFromGame);
+
     return players[playerBefore].name;
   }
   getPlayerAfterID(players, currentPlayer) {
-    let playerAfter = 0;
-    if (currentPlayer !== players.filter((player) => player.name).length - 1) {
-      playerAfter = currentPlayer + 1;
-    }
+    //@@@@@@@@@@@@@remove flagged players@@@@@@@@@@@@@@@@@@
+    let playerAfter = currentPlayer;
+    do {
+      playerAfter =
+        (playerAfter + 1) % players.filter((player) => player.name).length;
+    } while (players[playerAfter].removedFromGame);
     return playerAfter;
   }
 
   getPlayerBeforeID(players, currentPlayer) {
-    let playerBefore = players.length - 1;
-    if (currentPlayer !== 0) {
-      playerBefore = currentPlayer - 1;
-    }
+    //@@@@@@@@@@@@@@@remove flagged players@@@@@@@@@@@@@@@@@
+    let playerBefore = currentPlayer;
+    do {
+      playerBefore =
+        (((playerBefore - 1) % players.filter((player) => player.name).length) +
+          players.filter((player) => player.name).length) %
+        players.filter((player) => player.name).length;
+    } while (players[playerBefore].removedFromGame);
     return playerBefore;
   }
   giveSelfSip(sips) {}
@@ -815,6 +929,15 @@ class App extends Component {
     this.setState({
       givingSips,
       sipsCirculating,
+    });
+  }
+
+  incrementTimesBecame3(players, currentPlayer) {
+    let newPlayers = players;
+    newPlayers[currentPlayer].timesBecame3 =
+      newPlayers[currentPlayer].timesBecame3 + 1;
+    this.setState({
+      players: newPlayers,
     });
   }
 
@@ -831,11 +954,13 @@ class App extends Component {
     const promptTextSum = '';
     this.addSips(currentPlayer, playerNum, sipsCirculating);
     let cannable = false;
+    let makingRule = false;
     this.setState({
       givenSips,
       givingSips,
       promptTextSum,
       cannable,
+      makingRule,
     });
   }
 
@@ -845,7 +970,6 @@ class App extends Component {
       return;
     }
 
-    console.log('sips from rule: ' + sipsFromRule);
     this.addSips(currentPlayer, playerNum, parseInt(sipsFromRule));
     const ruleSips =
       players[playerNum].name +
@@ -853,7 +977,9 @@ class App extends Component {
       sipsFromRule +
       (sipsFromRule === '1'
         ? " sip because they can't follow rules."
-        : " sips because they can't follow rules.");
+        : sipsFromRule >= 0
+        ? " sips because they can't follow rules."
+        : " sips because Johnny can't code");
     this.setState({
       ruleSips,
     });
@@ -872,24 +998,21 @@ class App extends Component {
   }
 
   setNextPlayer = () => {
-    let currentPlayer = 0;
+    const { players, currentPlayer } = this.state;
     let rolls = [];
     let rollSum = 0;
     let promptTextSum = '';
-    if (
-      this.state.currentPlayer !==
-      this.state.players.filter((player) => player.name).length - 1
-    ) {
-      currentPlayer = this.state.currentPlayer + 1;
-    }
+    let nextPlayer = this.getPlayerAfterID(players, currentPlayer);
 
     this.setState({
-      currentPlayer,
+      currentPlayer: nextPlayer,
       rolls,
       rollSum,
       promptTextSum,
       speedGun: 0,
       speeding: false,
+      givingSips: false,
+      givenSips: '',
     });
   };
 }

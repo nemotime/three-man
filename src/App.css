@@ -17,6 +17,19 @@ div .makeRule {
   color: white;
 }
 
+/* .moose {
+  background-image: url('./assets/formoose.gif');
+  background-position: center; 
+  background-repeat: no-repeat; 
+  background-size: cover; 
+} */
+
+/* .overlay {
+  background-color: rgba(0, 0, 0, 0.9);
+  width: 1000px;
+  height: 900px;
+} */
+
 .makeRule .diceRule {
   margin: 3px;
   border-radius: 5px;
@@ -153,6 +166,11 @@ form input {
 }
 .titleTop {
   font-size: 40px;
+  margin: 0;
+}
+
+.titleHolder {
+  padding: 35px;
 }
 
 .buttons {
@@ -168,9 +186,18 @@ form input {
   text-decoration: none;
   font-size: 18px;
   padding: 10px;
-  margin-right: 15px;
 }
 
+.button,
+.endButton {
+  margin: 0 120px 0 120px;
+}
+
+.button:disabled,
+.endButton:disabled {
+  background-color: #777;
+  color: #444;
+}
 .button:hover {
   background-color: rgb(17, 87, 17);
 }
