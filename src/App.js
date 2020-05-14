@@ -14,25 +14,30 @@ import can from './assets/L50.png';
 ORDER OF PRIORITY
 #######################
 
-BUG: MINES CANT BLOCK THE GAME FROM GIVING BASE RULE SIPS e.g. (1,1), 7's, 11's (3,3) AND DONT REVERSE THE SPEED GUN
+BUG: MINES CANT BLOCK THE GAME FROM GIVING BASE RULE SIPS e.g. (1,1), 7's, 11's (3,3) @@@@@@@@FIXED@@@@@@@@@
 
+Steps: gamesSips are queued. Only given when the person takes their next roll or ends their turn.
+Mining reverses the speed gun
 
-0.1 Split dice on double
+AND DONT REVERSE THE SPEED GUN AND DOESN'T NEGATE BECOMING 3MAN //not fixed yet//
+queueSpeedGun+1
+queue3ManChanges
+
 
 1.69 If nothing happens only end turn
 
-1.69420 roll off table scales with sips
-
 4. Allow input for rules, states for it
-Parse for "next player" and "previous player" maybe RANDOM PLAYER?
+Parse for "next player" and "previous player" maybe RANDOM PLAYER? (format below)
 
 4.5. Remove rule button
 
-6. Warn about mines around you
+4.9 sound effects
 
-1. Dice Stats
-Times rolled a # (per person, in the game)
+5. Dice Stats
 #3 man sips taken
+Times rolled a # (per person, in the game)
+
+600. Warn about mines around you
 
 FORMAT:
 ###########################################################################
@@ -43,30 +48,23 @@ Value: ______ Consequence:___________           //Amount of Sips: ______________
 e.g. When 4 total is rolled, give sips (4 sips)
 ###########################################################################
 
-
 ###############################
               DONE
 ###############################
+BUG: IF YOU ARE SPEEDING IT DOESN'T CANCEL THE ROLL (check speeding before giving sips)
 Player order: Have player order for 7's 11's etc
 State for players, state for 3-man
-
 0.01 FLAG PLAYERS IF THEY LEAVE THE GAME, UNFLAG IF THEY COME BACK? DONT DISPLAY FLAGGED PLAYERS
-
+0.1 Split dice on double
 1. Program for giving sips to desired player, update player sips using prevState
-
 1. Mid-game drop in drop out
-
+1.69420 roll off table scales with sips
 2. Simulate dice rolling
-
 2. Speeding
-
 2.5 fix one dice 1 aniamtion
-
 3. Demineur for placing mines to cancel a roll, count how many sips people have drank and grant them a "CAN" to mine people's rolls
 People who are mined have a % chance to hit the mine
-
 4.75 if rule is on it, shouldnt say nothing happens
-
 */
 
 class App extends Component {
@@ -88,6 +86,7 @@ class App extends Component {
       rollTotalsWithRules,
       dieWithRules,
       showingStats,
+      splittingSips,
     } = this.state;
     let mainAppClass = 'mainApp';
     let overlayClass = '';
@@ -355,6 +354,17 @@ class App extends Component {
                           Who do you want to give {this.state.rolls[0] * 2} sips
                           to?
                         </h2>
+                        {!splittingSips ? (
+                          <button
+                            type="button"
+                            class="button"
+                            onClick={() => this.splitSips()}
+                          >
+                            Split Sips
+                          </button>
+                        ) : (
+                          ''
+                        )}
                       </span>
                     ) : (
                       ''
@@ -369,7 +379,28 @@ class App extends Component {
                           return (
                             <button
                               key={index}
-                              onClick={() => this.displayGivenSips(index)}
+                              onClick={() =>
+                                this.displayGivenSips(index, false)
+                              }
+                              className="sipGiver"
+                              type="button"
+                            >
+                              {players[index].name}
+                            </button>
+                          );
+                        })
+                      : ''}
+                    {splittingSips
+                      ? players.map((player, index) => {
+                          //@@@@@@@skip players who are flagged@@@@@@@@@
+                          if (player === players[currentPlayer]) return '';
+                          if (player.removedFromGame) {
+                            return '';
+                          }
+                          return (
+                            <button
+                              key={index}
+                              onClick={() => this.displayGivenSips(index, true)}
                               className="sipGiver"
                               type="button"
                             >
@@ -379,6 +410,11 @@ class App extends Component {
                         })
                       : ''}
                     <h2>{givenSips}</h2>
+                    {speeding && givenSips === '' ? (
+                      <h2>You got caught speeding, end your turn</h2>
+                    ) : (
+                      ''
+                    )}
                     {this.state.rolls.map((roll, index) => (
                       <DiceImage roll={roll} key={index} />
                     ))}
@@ -424,6 +460,7 @@ class App extends Component {
     rollSum: null,
     promptTextSum: '',
     playersSet: false,
+    playerSipQueue: [],
     players: [
       {
         name: '',
@@ -451,6 +488,7 @@ class App extends Component {
     makingRule: false,
     customRules: [''],
     showingStats: false,
+    splittingSips: false,
     rollTotalsWithRules: {
       2: false,
       3: false,
@@ -474,7 +512,58 @@ class App extends Component {
     },
   };
 
+  queueSips(fromID, toID, sips) {
+    const { players, playerSipQueue } = this.state;
+    let newPlayerSipQueue = playerSipQueue;
+    console.log(newPlayerSipQueue);
+    if (isNaN(newPlayerSipQueue[toID])) {
+      newPlayerSipQueue[toID] = sips;
+    } else {
+      newPlayerSipQueue[toID] += sips;
+    }
+    console.log(newPlayerSipQueue);
+    //let playerSipQueue = JSON.parse(JSON.stringify(players));
+    // playerSipQueue[toID].sipsTaken += sips;
+    this.setState({
+      playerSipQueue: newPlayerSipQueue,
+    });
+  }
+  resolveSips() {
+    let { playerSipQueue, players } = this.state;
+    let newPlayers = JSON.parse(JSON.stringify(players));
+    playerSipQueue.map((player, index) => {
+      if (!isNaN(player)) newPlayers[index].sipsTaken += player;
+      return '';
+    });
+    this.setState({
+      players: newPlayers,
+      playerSipQueue: [],
+    });
+  }
+
+  revokeSips() {
+    this.setState({
+      playerSipQueue: [],
+    });
+  }
+  addSips(fromID, toID, sips) {
+    let playersCopy = this.state.players;
+    playersCopy[toID].sipsTaken += sips;
+    this.setState({
+      players: playersCopy,
+    });
+  }
+  splitSips() {
+    const { sipsCirculating } = this.state;
+    let newSips = Math.floor(sipsCirculating / 2);
+    this.setState({
+      splittingSips: true,
+      sipsCirculating: newSips,
+    });
+  }
+
   toggleStats() {
+    //buggy
     const { showingStats } = this.state;
     let opposite = !showingStats;
     this.setState({
@@ -555,6 +644,7 @@ class App extends Component {
       newPlayers[minedID].minesNearby++;
       let mined = true;
       this.setState({
+        playerSipQueue: [],
         players: newPlayers,
         cannable: cannableNew,
         mined,
@@ -583,12 +673,10 @@ class App extends Component {
     return odds;
   }
 
-  addSips(fromID, toID, sips) {
-    let playersCopy = this.state.players;
-    playersCopy[toID].sipsTaken += sips;
-    this.setState({
-      players: playersCopy,
-    });
+  calculateOddsToRollOffTable(playerID) {
+    const drunkScaler = 3.14159 * 0.1;
+    const { players } = this.state;
+    return (drunkScaler * players[playerID].sipsTaken) / 16;
   }
 
   showCans(number, player) {
@@ -655,6 +743,7 @@ class App extends Component {
 
   handleRemovePlayer = (idx) => () => {
     const { playersSet, players, threeMan } = this.state;
+
     if (playersSet && players.length === 1) {
       return;
     }
@@ -675,6 +764,7 @@ class App extends Component {
     this.setState({
       players: this.state.players.filter((s, sidx) => idx !== sidx),
     });
+    console.log(players);
   };
 
   diceAnim(timeout) {
@@ -684,6 +774,12 @@ class App extends Component {
     }, timeout);
   }
   diceRoll = (numberOfDice) => {
+    const { speeding } = this.state;
+    if (!speeding) {
+      this.resolveSips();
+    } else {
+      this.revokeSips();
+    }
     let mined = false;
     this.diceAnim(1000);
     let rolls = [];
@@ -692,13 +788,14 @@ class App extends Component {
       rolls[i] = Math.floor(Math.random() * 6) + 1;
       rollSum += rolls[i];
     }
-    rolls[0] = 5;
-    rolls[1] = 6;
-    rollSum = 11;
+    rolls[0] = 3;
+    rolls[1] = 3;
+    rollSum = 6;
     let givenSips = '';
     let givingSips = false;
-    let cannable = true;
+    let yesCannable = true;
     let { speedGun } = this.state;
+    let splittingSips = false;
 
     if (
       Math.random() * 100 <
@@ -713,9 +810,31 @@ class App extends Component {
         rollSum,
         givenSips,
         givingSips,
-        cannable,
+        cannable: yesCannable,
         mined,
         speedGun,
+        splittingSips,
+      });
+      return;
+    }
+    if (
+      Math.random() * 100 <
+      this.calculateOddsToRollOffTable(this.state.currentPlayer)
+    ) {
+      console.log('YOU ROLLED OFF THE TABLE');
+      this.setThreeMan(this.state.currentPlayer);
+      this.setState({
+        promptTextSum:
+          'You rolled off the table, you are now Three Man. Sweet.',
+        numberOfDice,
+        rolls,
+        rollSum,
+        givenSips,
+        givingSips,
+        cannable: yesCannable,
+        mined,
+        speedGun,
+        splittingSips,
       });
       return;
     }
@@ -726,9 +845,10 @@ class App extends Component {
         rollSum,
         givenSips,
         givingSips,
-        cannable,
+        cannable: yesCannable,
         mined,
         speedGun,
+        splittingSips,
       },
       () => {
         this.getResult();
@@ -749,7 +869,8 @@ class App extends Component {
       case 2:
         if (rolls[0] === 1) {
           text = 'You drink.\n';
-          this.addSips(currentPlayer, currentPlayer, 1);
+          //change to queue
+          this.queueSips(currentPlayer, currentPlayer, 1);
         } else {
           text = '';
         }
@@ -768,22 +889,22 @@ class App extends Component {
           'Person before you (' +
           this.getPlayerBeforeName(players, currentPlayer) +
           ') drinks 1.\n\n';
-        this.addSips(
+        this.queueSips(
           currentPlayer,
           this.getPlayerBeforeID(players, currentPlayer),
           1,
-        );
+        ); //change to queue
         break;
       case 7:
         text =
           'Person after you (' +
           this.getPlayerAfterName(players, currentPlayer) +
           ') drinks 1.\n\n';
-        this.addSips(
+        this.queueSips(
           currentPlayer,
           this.getPlayerAfterID(players, currentPlayer),
           1,
-        );
+        ); //change to queue
         break;
       case 12:
         text = 'Make a new rule.';
@@ -821,7 +942,7 @@ class App extends Component {
         switch (roll) {
           case 3:
             if (threeMan === null) return '';
-            this.addSips(currentPlayer, threeMan, 1);
+            this.queueSips(currentPlayer, threeMan, 1); //change to queue
             returnedText +=
               '\nThree man (' + players[threeMan].name + ') you drink 1.\n\n';
             break;
@@ -860,12 +981,12 @@ class App extends Component {
         }
         if (rolls[0] !== 1) {
           if (rolls[0] === 3 && threeMan !== null) {
-            const givenSips = 'Three Man take 6 more sips\n';
-            this.addSips(currentPlayer, threeMan, 6);
+            const givenSips = speeding ? '' : 'Three Man take 6 more sips\n';
+            this.queueSips(currentPlayer, threeMan, 6); //change to queue
             this.setState({
               givenSips,
             });
-          } else {
+          } else if (!speeding) {
             this.giveSomeoneSips(rolls[0] * 2);
             return true;
           }
@@ -941,20 +1062,47 @@ class App extends Component {
     });
   }
 
-  displayGivenSips(playerNum) {
-    let { players, currentPlayer, sipsCirculating } = this.state;
-    const givenSips =
-      players[currentPlayer].name +
-      ' gave ' +
-      sipsCirculating +
-      ' sips to ' +
-      players[playerNum].name +
-      '.';
+  displayGivenSips(playerNum, isDoneSplitting) {
+    let {
+      players,
+      currentPlayer,
+      sipsCirculating,
+      givenSips,
+      splittingSips,
+      speeding,
+    } = this.state;
+
+    if (splittingSips && givenSips) {
+      givenSips +=
+        ' ' +
+        players[currentPlayer].name +
+        ' also gave ' +
+        sipsCirculating +
+        ' sips to ' +
+        players[playerNum].name +
+        '.';
+    } else {
+      givenSips =
+        players[currentPlayer].name +
+        ' gave ' +
+        sipsCirculating +
+        ' sips to ' +
+        players[playerNum].name +
+        '.';
+    }
     const givingSips = false;
     const promptTextSum = '';
     this.addSips(currentPlayer, playerNum, sipsCirculating);
     let cannable = false;
     let makingRule = false;
+    if (speeding) {
+      givenSips = 'You became Three Man for speeding';
+    }
+    if (isDoneSplitting) {
+      this.setState({
+        splittingSips: false,
+      });
+    }
     this.setState({
       givenSips,
       givingSips,
@@ -998,7 +1146,20 @@ class App extends Component {
   }
 
   setNextPlayer = () => {
-    const { players, currentPlayer } = this.state;
+    const { players, currentPlayer, cannable } = this.state;
+    const { speeding } = this.state;
+    if (!speeding) {
+      this.resolveSips();
+    } else {
+      this.revokeSips();
+    }
+    // const { playerSipQueue } = this.state;
+    // if (playerSipQueue.length !== 0 && !cannable) {
+    //   this.setState({
+    //     players: playerSipQueue,
+    //     playerSipQueue: [],
+    //   });
+    // }
     let rolls = [];
     let rollSum = 0;
     let promptTextSum = '';
@@ -1013,6 +1174,7 @@ class App extends Component {
       speeding: false,
       givingSips: false,
       givenSips: '',
+      splittingSips: false,
     });
   };
 }
