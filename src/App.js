@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import UIfx from 'uifx';
 import './App.css';
 import one from './assets/one.png';
 import two from './assets/two.png';
@@ -9,34 +10,80 @@ import six from './assets/six.png';
 import diceGif from './assets/dice.gif';
 import can from './assets/L50.png';
 
+import onetwoSound from './assets/sfx/1-2.wav';
+import threethreeSound from './assets/sfx/3-3.wav';
+import dicerollSound from './assets/sfx/dice-roll.mp3';
+import endturnSound from './assets/sfx/end-turn.mp3';
+import hitmineSound from './assets/sfx/hit-mine.mp3';
+import joinSound from './assets/sfx/join.mp3';
+import leaveSound from './assets/sfx/leave.mp3';
+import mineSound from './assets/sfx/mine.mp3';
+import melSound from './assets/sfx/mel.mp3';
+import spankSound from './assets/sfx/spank.mp3';
+import hitmarkerSound from './assets/sfx/hitmarker.mp3';
+
+const onetwoSFX = new UIfx(onetwoSound, {
+  volume: 1, // number between 0.0 ~ 1.0
+  throttleMs: 100,
+});
+const threethreeSFX = new UIfx(threethreeSound, {
+  volume: 0.4, // number between 0.0 ~ 1.0
+  throttleMs: 100,
+});
+const dicerollSFX = new UIfx(dicerollSound, {
+  volume: 1, // number between 0.0 ~ 1.0
+  throttleMs: 100,
+});
+const endturnSFX = new UIfx(endturnSound, {
+  volume: 0.3, // number between 0.0 ~ 1.0
+  throttleMs: 100,
+});
+const hitmineSFX = new UIfx(hitmineSound, {
+  volume: 0.8, // number between 0.0 ~ 1.0
+  throttleMs: 100,
+});
+const joinSFX = new UIfx(joinSound, {
+  volume: 0.4, // number between 0.0 ~ 1.0
+  throttleMs: 100,
+});
+const leaveSFX = new UIfx(leaveSound, {
+  volume: 0.4, // number between 0.0 ~ 1.0
+  throttleMs: 100,
+});
+const mineSFX = new UIfx(mineSound, {
+  volume: 0.8, // number between 0.0 ~ 1.0
+  throttleMs: 100,
+});
+const melSFX = new UIfx(melSound, {
+  volume: 0.1, // number between 0.0 ~ 1.0
+  throttleMs: 100,
+});
+const spankSFX = new UIfx(spankSound, {
+  volume: 0.3, // number between 0.0 ~ 1.0
+  throttleMs: 100,
+});
+const hitmarkerSFX = new UIfx(hitmarkerSound, {
+  volume: 0.7, // number between 0.0 ~ 1.0
+  throttleMs: 100,
+});
+
 /*
 #######################
 ORDER OF PRIORITY
 #######################
 
-BUG: MINES CANT BLOCK THE GAME FROM GIVING BASE RULE SIPS e.g. (1,1), 7's, 11's (3,3) @@@@@@@@FIXED@@@@@@@@@
+4.9 sound effects  CUT EMPTY SOUND FROM DICE ROLL
+YEP and MEL skin
 
-Steps: gamesSips are queued. Only given when the person takes their next roll or ends their turn.
-Mining reverses the speed gun
-
-AND DONT REVERSE THE SPEED GUN AND DOESN'T NEGATE BECOMING 3MAN //not fixed yet//
-queueSpeedGun+1
-queue3ManChanges
-
-
-1.69 If nothing happens only end turn
-
-4. Allow input for rules, states for it
-Parse for "next player" and "previous player" maybe RANDOM PLAYER? (format below)
-
-4.5. Remove rule button
-
-4.9 sound effects
 
 5. Dice Stats
 #3 man sips taken
 Times rolled a # (per person, in the game)
 
+??????????
+MAYBE
+???????????
+1.69 If nothing happens only end turn
 600. Warn about mines around you
 
 FORMAT:
@@ -48,10 +95,17 @@ Value: ______ Consequence:___________           //Amount of Sips: ______________
 e.g. When 4 total is rolled, give sips (4 sips)
 ###########################################################################
 
+
 ###############################
               DONE
 ###############################
 BUG: IF YOU ARE SPEEDING IT DOESN'T CANCEL THE ROLL (check speeding before giving sips)
+BUG: MINES CANT BLOCK THE GAME FROM GIVING BASE RULE SIPS e.g. (1,1), 7's, 11's (3,3) @@@@@@@@FIXED@@@@@@@@@
+AND DONT REVERSE THE SPEED GUN AND DOESN'T NEGATE BECOMING 3MAN //not fixed yet//
+queueSpeedGun+1
+queue3ManChanges
+Steps: gamesSips are queued. Only given when the person takes their next roll or ends their turn.
+Mining reverses the speed gun
 Player order: Have player order for 7's 11's etc
 State for players, state for 3-man
 0.01 FLAG PLAYERS IF THEY LEAVE THE GAME, UNFLAG IF THEY COME BACK? DONT DISPLAY FLAGGED PLAYERS
@@ -64,6 +118,9 @@ State for players, state for 3-man
 2.5 fix one dice 1 aniamtion
 3. Demineur for placing mines to cancel a roll, count how many sips people have drank and grant them a "CAN" to mine people's rolls
 People who are mined have a % chance to hit the mine
+4.5. Remove rule button
+4. Allow input for rules, states for it
+Parse for "next player" and "previous player" maybe RANDOM PLAYER? (format below)
 4.75 if rule is on it, shouldnt say nothing happens
 */
 
@@ -87,13 +144,21 @@ class App extends Component {
       dieWithRules,
       showingStats,
       splittingSips,
+      removingRule,
+      firstSipsGiven,
+      glowEndTurn,
+      someoneLeft,
     } = this.state;
     let mainAppClass = 'mainApp';
     let overlayClass = '';
-    // if (players[currentPlayer].name === 'Moose') {
-    //   overlayClass += 'overlay';
-    //   mainAppClass += ' moose';
-    // }
+    if (players[currentPlayer].name === 'Mel') {
+      overlayClass += 'overlay';
+      mainAppClass += ' mel';
+    }
+    let endClass = 'endButton';
+    if (glowEndTurn) {
+      endClass += ' glowingEnd';
+    }
     return (
       <div className="App">
         <table className="sidebar">
@@ -285,7 +350,7 @@ class App extends Component {
               {this.state.playersSet ? (
                 <button
                   disabled={rolling}
-                  className="endButton"
+                  className={endClass}
                   onClick={this.setNextPlayer}
                 >
                   End Turn
@@ -309,11 +374,21 @@ class App extends Component {
                       <span>
                         {makingRule ? (
                           <div className="makeRule">
+                            <button
+                              type="button"
+                              className="button"
+                              onClick={() => this.cancelRule()}
+                            >
+                              or Cancel a Rule
+                            </button>
                             <h3>Make a rule with number showing on a dice</h3>
                             {[1, 2, 3, 4, 5, 6].map((number) => {
                               let diceClassName = 'diceRule';
                               if (dieWithRules[number]) {
                                 diceClassName += ' diceHasRule';
+                              }
+                              if (removingRule && !dieWithRules[number]) {
+                                return '';
                               }
                               return (
                                 <button
@@ -332,6 +407,12 @@ class App extends Component {
                                 let diceClassName = 'diceRule';
                                 if (rollTotalsWithRules[number]) {
                                   diceClassName += ' diceHasRule';
+                                }
+                                if (
+                                  removingRule &&
+                                  !rollTotalsWithRules[number]
+                                ) {
+                                  return '';
                                 }
                                 return (
                                   <button
@@ -357,7 +438,7 @@ class App extends Component {
                         {!splittingSips ? (
                           <button
                             type="button"
-                            class="button"
+                            className="button"
                             onClick={() => this.splitSips()}
                           >
                             Split Sips
@@ -397,12 +478,14 @@ class App extends Component {
                           if (player.removedFromGame) {
                             return '';
                           }
+
                           return (
                             <button
                               key={index}
                               onClick={() => this.displayGivenSips(index, true)}
                               className="sipGiver"
                               type="button"
+                              disabled={!firstSipsGiven}
                             >
                               {players[index].name}
                             </button>
@@ -445,12 +528,76 @@ class App extends Component {
             {/* here */}
           </div>
         </div>
-        {/* <div>
+        <div className="stats">
           <button type="button" onClick={() => this.toggleStats()}>
             {showingStats ? 'Hide Stats' : 'Show Stats'}
           </button>
-          {showingStats ? players : ''}
-        </div> */}
+          {showingStats ? JSON.stringify(players) : ''}
+        </div>
+        {this.state.playersSet ? (
+          <span className="leftSideHolder">
+            <textarea className="ruleBox"></textarea>
+            <br />
+            <button
+              type="button"
+              className="button someonesRule"
+              onClick={() => this.cancelSomeonesRule()}
+            >
+              {removingRule && someoneLeft
+                ? 'Stop cancelling rules'
+                : 'Cancel a rule'}
+            </button>
+            {removingRule && someoneLeft ? (
+              <div className="makeRule">
+                <h3>Cancel a rule on a die</h3>
+
+                {[1, 2, 3, 4, 5, 6].map((number) => {
+                  let diceClassName = 'diceRule';
+                  if (dieWithRules[number]) {
+                    diceClassName += ' diceHasRule';
+                  }
+                  if (!dieWithRules[number]) {
+                    return '';
+                  }
+                  return (
+                    <button
+                      key={number}
+                      onClick={() => this.setDieRule(number)}
+                      className={diceClassName} //was button
+                    >
+                      {number}
+                    </button>
+                  );
+                })}
+                <br />
+                <h3>Cancel a rule on the dice total</h3>
+
+                {[2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((number) => {
+                  let diceClassName = 'diceRule';
+                  if (rollTotalsWithRules[number]) {
+                    diceClassName += ' diceHasRule';
+                  }
+                  if (!rollTotalsWithRules[number]) {
+                    return '';
+                  }
+                  return (
+                    <button
+                      key={number}
+                      onClick={() => this.setDiceTotalRule(number)}
+                      className={diceClassName} //was button
+                    >
+                      {number}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              ''
+            )}
+          </span>
+        ) : (
+          ''
+        )}
       </div>
     );
   }
@@ -510,18 +657,40 @@ class App extends Component {
       5: false,
       6: false,
     },
+    speedingChangedState: false,
+    speedGunAdded: false,
+    threeManChangedState: null,
+    isThreeManChanged: false,
+    removingRule: false,
+    firstSipsGiven: false,
+    glowEndTurn: false,
+    someoneLeft: false,
   };
 
+  cancelRule() {
+    let removingRule = true;
+    this.setState({
+      removingRule,
+    });
+  }
+
+  cancelSomeonesRule() {
+    let removingRule = !this.state.removingRule;
+    let someoneLeft = !this.state.someoneLeft;
+    this.setState({
+      removingRule,
+      someoneLeft,
+    });
+  }
+
   queueSips(fromID, toID, sips) {
-    const { players, playerSipQueue } = this.state;
+    const { playerSipQueue } = this.state;
     let newPlayerSipQueue = playerSipQueue;
-    console.log(newPlayerSipQueue);
     if (isNaN(newPlayerSipQueue[toID])) {
       newPlayerSipQueue[toID] = sips;
     } else {
       newPlayerSipQueue[toID] += sips;
     }
-    console.log(newPlayerSipQueue);
     //let playerSipQueue = JSON.parse(JSON.stringify(players));
     // playerSipQueue[toID].sipsTaken += sips;
     this.setState({
@@ -585,12 +754,19 @@ class App extends Component {
     }
   }
   setDieRule(number) {
-    const { dieWithRules } = this.state;
+    const { dieWithRules, removingRule } = this.state;
     let newRules = dieWithRules;
-    newRules[number] = true;
+    let promptTextSum;
+
+    if (removingRule) {
+      newRules[number] = false;
+      promptTextSum = 'Rule on ' + number + ' removed!';
+    } else {
+      newRules[number] = true;
+      promptTextSum = 'Rule on ' + number + ' made!';
+    }
     let makingRule = false;
     let givingSips = false;
-    let promptTextSum = 'Rule made!';
     this.setState({
       dieWithRules: newRules,
       makingRule,
@@ -600,12 +776,20 @@ class App extends Component {
   }
 
   setDiceTotalRule(number) {
-    const { rollTotalsWithRules } = this.state;
+    const { rollTotalsWithRules, removingRule } = this.state;
     let newRules = rollTotalsWithRules;
-    newRules[number] = true;
+    let promptTextSum;
+
+    if (removingRule) {
+      newRules[number] = false;
+      promptTextSum = 'Rule on ' + number + ' removed!';
+    } else {
+      newRules[number] = true;
+      promptTextSum = 'Rule on ' + number + ' made!';
+    }
+
     let makingRule = false;
     let givingSips = false;
-    let promptTextSum = 'Rule made!';
     this.setState({
       rollTotalsWithRules: newRules,
       makingRule,
@@ -626,6 +810,7 @@ class App extends Component {
         },
       ]),
     });
+    joinSFX.play();
   }
 
   handlePlayerName(evt) {
@@ -634,11 +819,36 @@ class App extends Component {
     });
   }
   mineSomeone(minerID, minedID) {
-    let { cannable, players } = this.state;
+    let {
+      cannable,
+      players,
+      threeManChangedState,
+      isThreeManChanged,
+      speedingChangedState,
+      speedGunAdded,
+    } = this.state;
+    let newSpeedGun = this.state.speedGun - 1;
     let cannableNew = false;
     if (!cannable) {
       return;
     } else {
+      mineSFX.play();
+
+      if (isThreeManChanged) {
+        this.setThreeMan(threeManChangedState);
+      }
+      if (speedingChangedState) {
+        this.setState({
+          speeding: false,
+          speedGun: newSpeedGun,
+        });
+      }
+      if (speedGunAdded) {
+        this.setState({
+          speedGun: newSpeedGun,
+        });
+      }
+      //set speeding to false and decrement speed gun
       let newPlayers = players;
       newPlayers[minerID].minesUsed++;
       newPlayers[minedID].minesNearby++;
@@ -653,8 +863,9 @@ class App extends Component {
   }
 
   calculateHittingMineChance(playerID) {
-    const inverseSipFrequencyFactor = 2.5;
     const { players } = this.state;
+    const inverseSipFrequencyFactor = 2.5;
+    let isff = (inverseSipFrequencyFactor * 10) / players.length;
     let playerBeforeID = this.getPlayerBeforeID(players, playerID);
     let playerAfterID = this.getPlayerAfterID(players, playerID);
     let playerBeforeMines = players[playerBeforeID].minesNearby;
@@ -663,8 +874,7 @@ class App extends Component {
     let odds = 0;
     odds +=
       2 **
-        ((myMines + 0.2 * playerBeforeMines + 0.2 * playerAfterMines) /
-          inverseSipFrequencyFactor) -
+        ((myMines + 0.2 * playerBeforeMines + 0.2 * playerAfterMines) / isff) -
       1;
     if (odds > 15) {
       odds = 15;
@@ -739,6 +949,7 @@ class App extends Component {
         },
       ]),
     });
+    joinSFX.play();
   };
 
   handleRemovePlayer = (idx) => () => {
@@ -747,6 +958,8 @@ class App extends Component {
     if (playersSet && players.length === 1) {
       return;
     }
+
+    leaveSFX.play();
     let flaggedPlayers = players;
     flaggedPlayers[idx].removedFromGame = true;
 
@@ -773,14 +986,24 @@ class App extends Component {
       this.setState({ rolling: false });
     }, timeout);
   }
+
   diceRoll = (numberOfDice) => {
-    const { speeding } = this.state;
+    dicerollSFX.play();
+
+    const { speeding, speedGunQueued, currentPlayer } = this.state;
+    let { speedGun } = this.state;
+
+    if (speedGunQueued) {
+      this.resolveSpeedGun(currentPlayer);
+    }
     if (!speeding) {
       this.resolveSips();
     } else {
       this.revokeSips();
     }
+
     let mined = false;
+
     this.diceAnim(1000);
     let rolls = [];
     let rollSum = 0;
@@ -788,19 +1011,24 @@ class App extends Component {
       rolls[i] = Math.floor(Math.random() * 6) + 1;
       rollSum += rolls[i];
     }
-    rolls[0] = 3;
-    rolls[1] = 3;
-    rollSum = 6;
+    rolls[0] = 6;
+    rolls[1] = 6;
+    rollSum = 12;
     let givenSips = '';
     let givingSips = false;
     let yesCannable = true;
-    let { speedGun } = this.state;
     let splittingSips = false;
-
+    let isThreeManChanged = false;
+    let speedingChangedState = false;
+    let speedGunAdded = false;
+    let removingRule = false;
+    let glowEndTurn = false;
+    let makeRule = false;
     if (
       Math.random() * 100 <
       this.calculateHittingMineChance(this.state.currentPlayer)
     ) {
+      hitmineSFX.play();
       console.log('YOU HIT A MINE');
       this.setThreeMan(this.state.currentPlayer);
       this.setState({
@@ -814,6 +1042,12 @@ class App extends Component {
         mined,
         speedGun,
         splittingSips,
+        isThreeManChanged,
+        speedingChangedState,
+        speedGunAdded,
+        removingRule,
+        glowEndTurn,
+        makeRule,
       });
       return;
     }
@@ -821,6 +1055,7 @@ class App extends Component {
       Math.random() * 100 <
       this.calculateOddsToRollOffTable(this.state.currentPlayer)
     ) {
+      hitmineSFX.play();
       console.log('YOU ROLLED OFF THE TABLE');
       this.setThreeMan(this.state.currentPlayer);
       this.setState({
@@ -835,6 +1070,12 @@ class App extends Component {
         mined,
         speedGun,
         splittingSips,
+        isThreeManChanged,
+        speedingChangedState,
+        speedGunAdded,
+        removingRule,
+        glowEndTurn,
+        makeRule,
       });
       return;
     }
@@ -849,6 +1090,12 @@ class App extends Component {
         mined,
         speedGun,
         splittingSips,
+        isThreeManChanged,
+        speedingChangedState,
+        speedGunAdded,
+        removingRule,
+        glowEndTurn,
+        makeRule,
       },
       () => {
         this.getResult();
@@ -871,6 +1118,9 @@ class App extends Component {
           text = 'You drink.\n';
           //change to queue
           this.queueSips(currentPlayer, currentPlayer, 1);
+          setTimeout(() => {
+            hitmarkerSFX.play();
+          }, 1000);
         } else {
           text = '';
         }
@@ -894,6 +1144,9 @@ class App extends Component {
           this.getPlayerBeforeID(players, currentPlayer),
           1,
         ); //change to queue
+        setTimeout(() => {
+          hitmarkerSFX.play();
+        }, 1000);
         break;
       case 7:
         text =
@@ -905,6 +1158,9 @@ class App extends Component {
           this.getPlayerAfterID(players, currentPlayer),
           1,
         ); //change to queue
+        setTimeout(() => {
+          hitmarkerSFX.play();
+        }, 1000);
         break;
       case 12:
         text = 'Make a new rule.';
@@ -916,10 +1172,16 @@ class App extends Component {
     }
     if (this.checkHasRule(useTotalOfRoll, rollSum)) {
       text += '\nCustom rule in effect!\n';
+      setTimeout(() => {
+        hitmarkerSFX.play();
+      }, 1000);
     }
     text = this.checkEachDice(text);
     if ((text.length === 0) & (numberOfDice > 1)) {
       text = 'Nothing happens.\n';
+      this.setState({
+        glowEndTurn: true,
+      });
     } else if (text === '-1') {
       text = '';
     }
@@ -938,6 +1200,9 @@ class App extends Component {
         let returnedText = '';
         if (this.checkHasRule(useTotalOfRoll, roll)) {
           returnedText += '\nCustom rule in effect!\n';
+          setTimeout(() => {
+            hitmarkerSFX.play();
+          }, 1000);
         }
         switch (roll) {
           case 3:
@@ -945,6 +1210,9 @@ class App extends Component {
             this.queueSips(currentPlayer, threeMan, 1); //change to queue
             returnedText +=
               '\nThree man (' + players[threeMan].name + ') you drink 1.\n\n';
+            setTimeout(() => {
+              hitmarkerSFX.play();
+            }, 1000);
             break;
           default:
             returnedText += '';
@@ -966,22 +1234,35 @@ class App extends Component {
     if (rolls.length > 1) {
       if (rolls[0] === rolls[1]) {
         numDoubles = numDoubles + 1;
+        let speedGunAdded = true;
+        //change to queueSpeedGun
+        // this.queueSpeedGun();
         this.setState({
           speedGun: numDoubles,
+          speedGunAdded,
         });
         if (numDoubles === 3) {
           speeding = true;
+          let speedingChangedState = true;
+          let speedGunAdded = true;
           this.setThreeMan(currentPlayer);
           const givenSips = 'You became Three Man for speeding\n';
           this.setState({
             givenSips,
             speeding,
+            speedingChangedState,
+            speedGunAdded,
           });
           return;
         }
         if (rolls[0] !== 1) {
           if (rolls[0] === 3 && threeMan !== null) {
+            setTimeout(() => {
+              threethreeSFX.play();
+              hitmarkerSFX.play();
+            }, 1200);
             const givenSips = speeding ? '' : 'Three Man take 6 more sips\n';
+
             this.queueSips(currentPlayer, threeMan, 6); //change to queue
             this.setState({
               givenSips,
@@ -995,10 +1276,45 @@ class App extends Component {
     }
   }
   setThreeMan(player) {
+    let threeManChangedState = this.state.threeMan;
+    let isThreeManChanged = true;
     this.setState({
       threeMan: player,
+      threeManChangedState,
+      isThreeManChanged,
+    });
+    setTimeout(() => {
+      onetwoSFX.play();
+    }, 1000);
+  }
+
+  queueSpeedGun() {
+    this.setState({
+      speedGunQueued: true,
     });
   }
+
+  resolveSpeedGun(currentPlayer) {
+    const { speeding, speedGun } = this.state;
+    let newSpeeding = speeding;
+    let newSpeedGun = speedGun;
+    newSpeedGun = newSpeedGun + 1;
+
+    if (newSpeedGun === 3) {
+      newSpeeding = true;
+      this.setThreeMan(currentPlayer);
+      const givenSips = 'You became Three Man for speeding\n';
+      this.setState({
+        givenSips,
+        speeding: newSpeeding,
+      });
+    }
+    this.setState({
+      speedGun: newSpeedGun,
+      speedGunQueued: false,
+    });
+  }
+
   getPlayerAfterName(players, currentPlayer) {
     //@@@@@@@remove flagged players@@@@@@@@@@@@
     let playerAfter = currentPlayer;
@@ -1070,7 +1386,12 @@ class App extends Component {
       givenSips,
       splittingSips,
       speeding,
+      firstSipsGiven,
     } = this.state;
+    let newFirstSipsGiven = firstSipsGiven;
+    if (splittingSips) {
+      newFirstSipsGiven = !newFirstSipsGiven;
+    }
 
     if (splittingSips && givenSips) {
       givenSips +=
@@ -1090,13 +1411,14 @@ class App extends Component {
         players[playerNum].name +
         '.';
     }
+    spankSFX.play();
     const givingSips = false;
     const promptTextSum = '';
     this.addSips(currentPlayer, playerNum, sipsCirculating);
     let cannable = false;
     let makingRule = false;
     if (speeding) {
-      givenSips = 'You became Three Man for speeding';
+      givenSips = 'You became Three Man for speeding'; //probleM?
     }
     if (isDoneSplitting) {
       this.setState({
@@ -1109,6 +1431,7 @@ class App extends Component {
       promptTextSum,
       cannable,
       makingRule,
+      firstSipsGiven: newFirstSipsGiven,
     });
   }
 
@@ -1146,8 +1469,10 @@ class App extends Component {
   }
 
   setNextPlayer = () => {
-    const { players, currentPlayer, cannable } = this.state;
+    const { players, currentPlayer } = this.state;
     const { speeding } = this.state;
+    endturnSFX.play();
+
     if (!speeding) {
       this.resolveSips();
     } else {
@@ -1164,7 +1489,9 @@ class App extends Component {
     let rollSum = 0;
     let promptTextSum = '';
     let nextPlayer = this.getPlayerAfterID(players, currentPlayer);
-
+    if (players[nextPlayer].name === 'Mel') {
+      melSFX.play();
+    }
     this.setState({
       currentPlayer: nextPlayer,
       rolls,
@@ -1175,6 +1502,9 @@ class App extends Component {
       givingSips: false,
       givenSips: '',
       splittingSips: false,
+      removingRule: false,
+      glowEndTurn: false,
+      makeRule: false,
     });
   };
 }

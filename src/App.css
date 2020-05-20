@@ -17,18 +17,53 @@ div .makeRule {
   color: white;
 }
 
-/* .moose {
-  background-image: url('./assets/formoose.gif');
-  background-position: center; 
-  background-repeat: no-repeat; 
-  background-size: cover; 
-} */
+.glowingEnd {
+  box-shadow: 0 0 10px #ed9e9e;
+  border: 1px solid transparent;
+}
+.ruleBox {
+  height: 300px;
+  width: 320px;
+  background-color: #333;
+  color: #fff;
+  font-size: 20px;
+  padding: 10px;
+}
 
-/* .overlay {
-  background-color: rgba(0, 0, 0, 0.9);
+.button.someonesRule {
+  margin-top: 10px;
+  background-color: #333;
+  color: #fff;
+}
+
+.button.someonesRule:hover {
+  background-color: #666;
+  color: #fff;
+}
+
+.leftSideHolder {
+  position: absolute;
+  left: 15px;
+  top: 50px;
+}
+
+.stats {
+  color: white;
+  margin-top: 170px;
+  /* display: none; */
+}
+.mel {
+  background-image: url('./assets/meldiploma.jpg');
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+.overlay {
+  background-color: rgba(30, 30, 30, 0.9);
   width: 1000px;
-  height: 900px;
-} */
+  height: 1000px;
+}
 
 .makeRule .diceRule {
   margin: 3px;
@@ -50,7 +85,7 @@ div .makeRule {
 }
 
 .diceHasRule {
-  background-color: rgb(255, 162, 162);
+  background-color: rgb(255, 107, 107);
   /* color: white; */
   border-color: rgb(240, 117, 117);
 }
@@ -102,7 +137,7 @@ div .makeRule {
   text-decoration: none;
   font-size: 18px;
   padding: 10px;
-  margin-bottom: 10px;
+  margin-bottom: 20px;
   min-width: 150px;
 }
 .ruleSips:hover {
@@ -156,7 +191,7 @@ form input {
   background-color: #1b1b1b;
   margin: auto 500px auto 500px;
   width: 1000px;
-  height: 900px;
+  height: 1000px;
   margin-top: 50px;
   color: white;
 }
@@ -198,6 +233,12 @@ form input {
   background-color: #777;
   color: #444;
 }
+
+.button:disabled:hover,
+.endButton:disabled:hover {
+  background-color: #666;
+  color: #444;
+}
 .button:hover {
   background-color: rgb(17, 87, 17);
 }
@@ -231,6 +272,21 @@ form input {
   font-size: 18px;
   padding: 10px;
   margin-right: 10px;
+}
+
+.sipGiver:disabled {
+  background-color: #777;
+  color: #444;
+  border: 2px solid black;
+  border-radius: 5px;
+  text-decoration: none;
+  font-size: 18px;
+  padding: 10px;
+  margin-right: 10px;
+}
+
+.sipGiver:disabled:hover {
+  background-color: #666;
 }
 
 .sipGiver:hover {
