@@ -1,0 +1,36 @@
+{
+  "files": {
+    "main.css": "/three-man/static/css/main.ef2108bb.chunk.css",
+    "main.js": "/three-man/static/js/main.246f4ab7.chunk.js",
+    "main.js.map": "/three-man/static/js/main.246f4ab7.chunk.js.map",
+    "runtime-main.js": "/three-man/static/js/runtime-main.94cc3872.js",
+    "runtime-main.js.map": "/three-man/static/js/runtime-main.94cc3872.js.map",
+    "static/js/2.36399c37.chunk.js": "/three-man/static/js/2.36399c37.chunk.js",
+    "static/js/2.36399c37.chunk.js.map": "/three-man/static/js/2.36399c37.chunk.js.map",
+    "index.html": "/three-man/index.html",
+    "precache-manifest.53f2bc095d9a64968f35b31f6c33b999.js": "/three-man/precache-manifest.53f2bc095d9a64968f35b31f6c33b999.js",
+    "service-worker.js": "/three-man/service-worker.js",
+    "static/css/main.ef2108bb.chunk.css.map": "/three-man/static/css/main.ef2108bb.chunk.css.map",
+    "static/js/2.36399c37.chunk.js.LICENSE.txt": "/three-man/static/js/2.36399c37.chunk.js.LICENSE.txt",
+    "static/media/1-2.wav": "/three-man/static/media/1-2.eafad475.wav",
+    "static/media/3-3.wav": "/three-man/static/media/3-3.94728d64.wav",
+    "static/media/L50.png": "/three-man/static/media/L50.d3c08da3.png",
+    "static/media/dice-roll.mp3": "/three-man/static/media/dice-roll.6c056c0d.mp3",
+    "static/media/dice.gif": "/three-man/static/media/dice.1826aec4.gif",
+    "static/media/end-turn.mp3": "/three-man/static/media/end-turn.0c8e342d.mp3",
+    "static/media/hit-mine.mp3": "/three-man/static/media/hit-mine.9abdc583.mp3",
+    "static/media/hitmarker.mp3": "/three-man/static/media/hitmarker.195d0c5e.mp3",
+    "static/media/join.mp3": "/three-man/static/media/join.d65eaa73.mp3",
+    "static/media/leave.mp3": "/three-man/static/media/leave.c04995ca.mp3",
+    "static/media/mel.mp3": "/three-man/static/media/mel.0b5f7b5a.mp3",
+    "static/media/App.css": "/three-man/static/media/meldiploma.17b40f73.jpg",
+    "static/media/mine.mp3": "/three-man/static/media/mine.06209ad1.mp3",
+    "static/media/spank.mp3": "/three-man/static/media/spank.7111f7c4.mp3"
+  },
+  "entrypoints": [
+    "static/js/runtime-main.94cc3872.js",
+    "static/js/2.36399c37.chunk.js",
+    "static/css/main.ef2108bb.chunk.css",
+    "static/js/main.246f4ab7.chunk.js"
+  ]
+}
