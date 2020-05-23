@@ -129,6 +129,7 @@ class App extends Component {
     const playerCount = this.state.players.filter((player) => player.name)
       .length;
     const SIPSINACAN = 16;
+
     const {
       players,
       currentPlayer,
@@ -149,6 +150,7 @@ class App extends Component {
       glowEndTurn,
       someoneLeft,
     } = this.state;
+
     let mainAppClass = 'mainApp';
     let overlayClass = '';
     if (players[currentPlayer].name === 'Mel') {
