@@ -1,17 +1,17 @@
 {
   "files": {
-    "main.css": "/three-man/static/css/main.ef2108bb.chunk.css",
-    "main.js": "/three-man/static/js/main.0bb3c1fd.chunk.js",
-    "main.js.map": "/three-man/static/js/main.0bb3c1fd.chunk.js.map",
-    "runtime-main.js": "/three-man/static/js/runtime-main.94cc3872.js",
-    "runtime-main.js.map": "/three-man/static/js/runtime-main.94cc3872.js.map",
-    "static/js/2.af364ac6.chunk.js": "/three-man/static/js/2.af364ac6.chunk.js",
-    "static/js/2.af364ac6.chunk.js.map": "/three-man/static/js/2.af364ac6.chunk.js.map",
+    "main.css": "/three-man/static/css/main.46520784.chunk.css",
+    "main.js": "/three-man/static/js/main.e48280b6.chunk.js",
+    "main.js.map": "/three-man/static/js/main.e48280b6.chunk.js.map",
+    "runtime-main.js": "/three-man/static/js/runtime-main.e3f01682.js",
+    "runtime-main.js.map": "/three-man/static/js/runtime-main.e3f01682.js.map",
+    "static/js/2.2dc0a2dc.chunk.js": "/three-man/static/js/2.2dc0a2dc.chunk.js",
+    "static/js/2.2dc0a2dc.chunk.js.map": "/three-man/static/js/2.2dc0a2dc.chunk.js.map",
     "index.html": "/three-man/index.html",
-    "precache-manifest.dbb82766afc7394a1dec2cc8c24297c6.js": "/three-man/precache-manifest.dbb82766afc7394a1dec2cc8c24297c6.js",
+    "precache-manifest.ecd286652eaecae7136fee37085c259e.js": "/three-man/precache-manifest.ecd286652eaecae7136fee37085c259e.js",
     "service-worker.js": "/three-man/service-worker.js",
-    "static/css/main.ef2108bb.chunk.css.map": "/three-man/static/css/main.ef2108bb.chunk.css.map",
-    "static/js/2.af364ac6.chunk.js.LICENSE.txt": "/three-man/static/js/2.af364ac6.chunk.js.LICENSE.txt",
+    "static/css/main.46520784.chunk.css.map": "/three-man/static/css/main.46520784.chunk.css.map",
+    "static/js/2.2dc0a2dc.chunk.js.LICENSE.txt": "/three-man/static/js/2.2dc0a2dc.chunk.js.LICENSE.txt",
     "static/media/L50.png": "/three-man/static/media/L50.d3c08da3.png",
     "static/media/dice-roll.mp3": "/three-man/static/media/dice-roll.6c056c0d.mp3",
     "static/media/dice.gif": "/three-man/static/media/dice.1826aec4.gif",
@@ -25,9 +25,9 @@
     "static/media/spank.mp3": "/three-man/static/media/spank.7111f7c4.mp3"
   },
   "entrypoints": [
-    "static/js/runtime-main.94cc3872.js",
-    "static/js/2.af364ac6.chunk.js",
-    "static/css/main.ef2108bb.chunk.css",
-    "static/js/main.0bb3c1fd.chunk.js"
+    "static/js/runtime-main.e3f01682.js",
+    "static/js/2.2dc0a2dc.chunk.js",
+    "static/css/main.46520784.chunk.css",
+    "static/js/main.e48280b6.chunk.js"
   ]
 }
